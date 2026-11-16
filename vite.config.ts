@@ -30,8 +30,26 @@ function noscriptTable(): Plugin {
   };
 }
 
-export default defineConfig({
-  base: "./",
-  plugins: [react(), tailwindcss(), noscriptTable()],
-  build: { target: ["es2022", "safari16"], chunkSizeWarningLimit: 1200 },
+/** Artifact 版本：字体走 Google Fonts（claude.ai 页面的内容安全策略只放行 fonts.googleapis.com / fonts.gstatic.com）。 */
+function googleFonts(): Plugin {
+  const href = "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap";
+  return {
+    name: "google-fonts",
+    transformIndexHtml: (html) =>
+      html.replace("</title>", `</title>\n    <link rel="preconnect" href="https://fonts.googleapis.com" />\n    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n    <link rel="stylesheet" href="${href}" />`),
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const artifact = mode === "artifact";
+  return {
+    base: "./",
+    plugins: [react(), tailwindcss(), noscriptTable(), ...(artifact ? [googleFonts()] : [])],
+    build: {
+      target: ["es2022", "safari16"],
+      chunkSizeWarningLimit: 1200,
+      // Artifact 版本只输出一个 JS 与一个 CSS，再由 scripts/inline-artifact.mjs 内联成单个 HTML
+      ...(artifact ? { outDir: "dist-artifact", cssCodeSplit: false, assetsInlineLimit: 100_000_000, modulePreload: false } : {}),
+    },
+  };
 });

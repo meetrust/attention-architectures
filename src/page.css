@@ -325,7 +325,7 @@ body { overflow-x: hidden; }
   .hero .datastrip div:nth-child(4) { border-top: 1px solid var(--rule); }
   .rr { grid-template-columns: minmax(0, 1fr); }
   .route-notes { grid-template-columns: minmax(0, 1fr); }
-  .duo li, .bars-axis.duo { grid-template-columns: 112px minmax(0, 1fr) 56px; }
+  .duo li, .bars-axis.duo { grid-template-columns: 132px minmax(0, 1fr) 52px; }
   .ls-row { grid-template-columns: minmax(0, 1fr); }
   .refs { grid-template-columns: minmax(0, 1fr); }
   .ls-key { grid-template-columns: minmax(0, 1fr); }

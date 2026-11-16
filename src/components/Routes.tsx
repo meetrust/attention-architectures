@@ -104,7 +104,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
         <figure className="fig" aria-labelledby="fig03-cap">
           <figcaption id="fig03-cap">
             <b>FIG.03 · 机制出现在多少组里</b>
-            <span>深色：最新版本仍在使用 · 浅色：任一版本使用过</span>
+            <span><Tail>深色：最新版本仍在使用 · 浅色：任一版本使用过</Tail></span>
           </figcaption>
           <div className="fig-body">
             <ul className="bars duo">
