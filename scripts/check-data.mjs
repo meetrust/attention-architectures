@@ -30,7 +30,7 @@ expect(glm.seq.length === 45 && glm.kinds[glm.seq[44]].label === "KDA", "GLM-5.3
 const step = STACKED.find((v) => v.id === "step-3.5-flash").stack;
 expect(step.seq.length === 45 && step.kinds[step.seq[0]].label === "Full", "Step 3.5 Flash：首层应为 Full");
 const mimo = STACKED.find((v) => v.id === "mimo-v2-flash").stack;
-expect(mimo.seq.length === 48 && mimo.kinds[mimo.seq[0]].label === "Global", "MiMo-V2-Flash：首层应为 Global");
+expect(mimo.seq.length === 48 && mimo.kinds[mimo.seq[0]].label === "SWA" && mimo.kinds[mimo.seq[5]].label === "Global", "MiMo-V2-Flash：应为 8 组“5 层 SWA + 1 层 Global”，首层为 SWA");
 
 if (errors.length) {
   console.error(errors.map((e) => "ERROR " + e).join("\n"));

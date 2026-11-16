@@ -92,8 +92,10 @@ export interface Version {
   name: string;
   /** 这一行覆盖的模型版本（MiniMax-Text-01 与 M1 共用一行） */
   models: string[];
-  /** 文中的架构描述，逐字 */
+  /** 文中的架构描述，逐字；经核对更正过的版本见 note */
   arch: string;
+  /** 更正说明：原文写法与更正依据 */
+  note?: string;
   mech: FamId[];
   refs: number[];
   unit?: Unit;
@@ -137,9 +139,10 @@ const glmSeq = [...interleave(44, 4, 4, 0, 1), 0];
 const stepKinds = [K("SWA", "swa"), K("Full", "full")];
 const stepSeq = [1, ...interleave(44, 4, 4, 0, 1)];
 
-// MiMo-V2-Flash：每组 5 × SWA + 1 × Global，共 8 组 48 层；首层额外为 Global，合计 39 SWA + 9 Global。
+// MiMo-V2-Flash：8 组，每组 5 × SWA 在前、1 × Global 在后，共 48 层 = 40 SWA + 8 Global，首层为 SWA。
+// 原文写作“39 SWA + 9 Global（首层额外为 Global）”，已按官方 README（参考文献 [17]）更正。
 const mimoKinds = [K("SWA", "swa"), K("Global", "full")];
-const mimoSeq = interleave(48, 6, 6, 0, 1).map((v, i) => (i === 0 ? 1 : v));
+const mimoSeq = interleave(48, 6, 6, 0, 1);
 
 export const GROUPS: Group[] = [
   {
@@ -278,8 +281,9 @@ export const GROUPS: Group[] = [
     versions: [
       {
         id: "mimo-v2-flash", name: "MiMo-V2-Flash", models: ["MiMo-V2-Flash"],
-        arch: "每组 5 × SWA（window = 128）+ 1 × Global；整体为 39 个 SWA 层 + 9 个 Global 层（首层额外为 Global）。", mech: ["swa", "full"], refs: [17],
-        stack: { kinds: mimoKinds, seq: mimoSeq, stated: [39, 9], rule: "按 8 组“5 层 SWA + 1 层 Global”排列，首层改为 Global" },
+        arch: "每组 5 × SWA（window = 128）+ 1 × Global；共 8 组，整体为 40 个 SWA 层 + 8 个 Global 层。", mech: ["swa", "full"], refs: [17],
+        note: "原文写作“整体为 39 个 SWA 层 + 9 个 Global 层（首层额外为 Global）”，已按官方 README 更正为 8 组、40 + 8，首层为 SWA。",
+        stack: { kinds: mimoKinds, seq: mimoSeq, stated: [40, 8], rule: "按 8 组“5 层 SWA + 1 层 Global”排列，每组最后一层为 Global（已按官方 README 更正）" },
       },
     ],
   },

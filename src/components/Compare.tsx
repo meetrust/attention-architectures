@@ -57,7 +57,7 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
         <div className="cmp-head">
           <div>
             <Dialog.Title className="text-xl font-black">对比 {gs.length} 组模型</Dialog.Title>
-            <Dialog.Description className="mt-1 text-sm text-kumo-subtle">架构描述逐字取自原文；圆点与胶囊是机制分类。</Dialog.Description>
+            <Dialog.Description className="mt-1 text-sm text-kumo-subtle">架构描述取自原文，更正处单独标注；圆点与胶囊是机制分类。</Dialog.Description>
           </div>
           <Dialog.Close render={(p) => <TsButton {...(p as object)} tone="ghost">关闭</TsButton>} />
         </div>
@@ -85,7 +85,10 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
               <div className="cmp-sec">
                 <span>ARCHITECTURE</span>
                 {g.versions.map((v) => (
-                  <p className="cmp-ver" key={v.id} style={{ margin: 0 }}><b>{v.name}</b><Tail>{v.arch}</Tail></p>
+                  <React.Fragment key={v.id}>
+                    <p className="cmp-ver" style={{ margin: 0 }}><b>{v.name}</b><Tail>{v.arch}</Tail></p>
+                    {v.note ? <p className="t-note" style={{ margin: 0 }}><Tail>{`更正：${v.note}`}</Tail></p> : null}
+                  </React.Fragment>
                 ))}
               </div>
             </section>

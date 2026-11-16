@@ -62,6 +62,7 @@ function GroupDetail({ g, inCompare, onToggleCompare, onCopy, onShowStack }: Det
               </div>
             </div>
             <p className="ver-arch"><Tail>{v.arch}</Tail></p>
+            {v.note ? <p className="ver-note"><b>更正</b><Tail>{v.note}</Tail></p> : null}
             {v.unit ? (
               <UnitBar unit={v.unit} />
             ) : v.stack ? (

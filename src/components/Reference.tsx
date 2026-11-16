@@ -8,7 +8,7 @@ export function SourceTable() {
   return (
     <section className="sec wrap" id="table" aria-labelledby="table-h">
       <SectionHead idx="04" title="原表对照" meta="Source table" id="table-h" />
-      <p className="sec-lead"><Tail>与原文表格逐字一致，方便引用；参考文献编号可以跳到第 05 节。</Tail></p>
+      <p className="sec-lead"><Tail>与原文表格一致，方便引用；MiMo-V2-Flash 一行的层数已按官方 README 更正。参考文献编号可以跳到第 05 节。</Tail></p>
       <div className="tbl sticky-first src-tbl" tabIndex={0} role="region" aria-label="原表：11 组模型的 Attention 架构与技术路线">
         <Table>
           <Table.Header>
@@ -30,7 +30,10 @@ export function SourceTable() {
                   </Table.Cell>
                   <Table.Cell>
                     {g.versions.map((v) => (
-                      <span className="t-arch" key={v.id}><b>{v.name}：</b><Tail>{v.arch}</Tail></span>
+                      <React.Fragment key={v.id}>
+                        <span className="t-arch"><b>{v.name}：</b><Tail>{v.arch}</Tail></span>
+                        {v.note ? <span className="t-note"><Tail>{`更正：${v.note}`}</Tail></span> : null}
+                      </React.Fragment>
                     ))}
                   </Table.Cell>
                   <Table.Cell>

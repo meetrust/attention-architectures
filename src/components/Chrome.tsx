@@ -142,7 +142,7 @@ export function Footer() {
   return (
     <footer className="foot wrap">
       <p>
-        <Tail>{`数据来源：《${SOURCE_TITLE}》，核对于 ${DATA_DATE}。架构描述、技术路线与参考文献逐字取自原文；机制分类与层序条码按原文整理，绘制规则写在 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。`}</Tail>
+        <Tail>{`数据来源：《${SOURCE_TITLE}》，核对于 ${DATA_DATE}。架构描述、技术路线与参考文献取自原文，其中 MiMo-V2-Flash 的层数已按官方 README 更正；机制分类与层序条码按原文整理，绘制规则写在 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。`}</Tail>
       </p>
       <p>
         与

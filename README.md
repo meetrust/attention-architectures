@@ -83,9 +83,9 @@ tools/                    页面检查脚本 · page QA scripts
 
 ## 数据说明 · Data notes
 
-架构描述、技术路线与参考文献逐字取自原文《大模型 Attention 架构与技术路线对照》，核对于 2026-11-16。机制分类和 4 份层序条码是按原文整理出来的，绘制规则写在页面 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。
+架构描述、技术路线与参考文献取自原文《大模型 Attention 架构与技术路线对照》，核对于 2026-11-16；其中 MiMo-V2-Flash 的层数按官方 README 更正为 8 组、40 个 SWA 层 + 8 个 Global 层。机制分类和 4 份层序条码是按原文整理出来的，绘制规则写在页面 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。
 
-Architecture descriptions, routes and references are taken word for word from the source table, checked on 2026-11-16. The mechanism classes and the 4 layer barcodes are derived from that text, with the drawing rules stated under FIG.04; FIG.01 is a schematic, not any model's real parameters.
+Architecture descriptions, routes and references come from the source table, checked on 2026-11-16; the MiMo-V2-Flash layer counts are corrected against its official README to 8 blocks, 40 SWA plus 8 global layers. The mechanism classes and the 4 layer barcodes are derived from that text, with the drawing rules stated under FIG.04; FIG.01 is a schematic, not any model's real parameters.
 
 ## 同系列 · Companion projects
 

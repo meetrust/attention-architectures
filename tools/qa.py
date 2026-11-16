@@ -302,7 +302,7 @@ async def interactions(b):
     bar = pg.locator(".ls-bar").nth(3); await bar.scroll_into_view_if_needed(); bb = await bar.bounding_box()
     await pg.touchscreen.tap(bb["x"] + 2, bb["y"] + bb["height"] / 2); await pg.wait_for_timeout(300)
     v = await bar.get_attribute("aria-valuetext"); print("  touch tap barcode (MiMo first layer):", v)
-    if not v.startswith("第 1 / 48 层：Global"): fail("interaction", "MiMo first layer should be Global")
+    if not v.startswith("第 1 / 48 层：SWA"): fail("interaction", "MiMo first layer should be SWA (8 blocks of 5 SWA + 1 Global)")
     st = pg.locator(".stage", has_text="SSM Hybrid"); await st.scroll_into_view_if_needed(); bb = await st.bounding_box()
     await pg.touchscreen.tap(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2); await pg.wait_for_timeout(1200)
     d = await pg.evaluate(STATE_JS)
