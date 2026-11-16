@@ -10,7 +10,7 @@ import asyncio, json, pathlib, sys
 from playwright.async_api import async_playwright
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:4173/"
-ONLY = sys.argv[2] if len(sys.argv) > 2 else "all"   # all | widths | overflow | interaction | modes
+ONLY = sys.argv[2] if len(sys.argv) > 2 else "all"   # all | widths | overflow | interaction | states | modes
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AXE = (ROOT / "node_modules/axe-core/axe.min.js").read_text()
 OUT = ROOT / "qa-out"
@@ -92,6 +92,22 @@ TEXT_JS = r"""() => {
     const v = getComputedStyle(el, ps).content;
     if (v && v !== 'none' && v !== 'normal' && GLYPH.test(v)) out.cssGlyphs.push('rendered ' + el.className + ps + ' ' + v);
   }
+  // numerals of one phrase set in two fonts (Chakra Petch has narrow proportional figures, Noto Sans SC tabular ones):
+  // "11 / 11" with the first 11 in Chakra and the second in Noto looks condensed
+  out.mixedNum = [];
+  for (const el of document.querySelectorAll('body *')) {
+    const cs = getComputedStyle(el);
+    if (!/block|list-item|table-cell|flex|grid/.test(cs.display) || !el.getBoundingClientRect().width) continue;
+    const fams = new Set(); const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t;
+    while ((t = w.nextNode())) {
+      if (!/\d/.test(t.nodeValue)) continue;
+      let q = t.parentElement, nested = false;
+      while (q && q !== el) { if (/block|list-item|table|flex|grid/.test(getComputedStyle(q).display)) { nested = true; break; } q = q.parentElement; }
+      if (nested || t.parentElement.closest('.sr-only, svg')) continue;
+      fams.add(getComputedStyle(t.parentElement).fontFamily.split(',')[0].trim());
+    }
+    if (fams.size > 1) out.mixedNum.push([...fams].join(' + ') + ' :: ' + el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.') + ' :: ' + el.textContent.trim().slice(0, 40));
+  }
   return out;
 }"""
 
@@ -132,6 +148,15 @@ LAYOUT_JS = r"""() => {
     if (r.right > innerWidth + 1 && !e.closest('.tbl, .nav ol, [role=region][tabindex]') && getComputedStyle(e).position !== 'fixed') out.overflowEls.push(e.tagName + '.' + e.className.toString().slice(0, 40) + ' right=' + Math.round(r.right));
   }
   out.overflowEls = out.overflowEls.slice(0, 8);
+  // fixed layers (compare tray, back-to-top, toasts) must sit fully inside the viewport
+  out.fixedOut = [];
+  for (const e of document.querySelectorAll('body *')) {
+    const cs = getComputedStyle(e);
+    if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+    const r = e.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    if (r.left < -0.5 || r.right > innerWidth + 0.5) out.fixedOut.push(e.tagName + '.' + e.className.toString().slice(0, 30) + ' left=' + Math.round(r.left) + ' right=' + Math.round(r.right));
+  }
   return out;
 }"""
 
@@ -171,13 +196,14 @@ async def audit_width(b, w, h=900):
     pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
     await pg.goto(URL); await settle(pg)
     t = await pg.evaluate(TEXT_JS)
-    print("1 text"); [fail("text", x) for x in t["text"]]; [fail("small", x) for x in t["small"]]; [fail("orphan", x) for x in t["orphans"]]; [fail("css glyph", x) for x in t["cssGlyphs"]]
+    print("1 text"); [fail("text", x) for x in t["text"]]; [fail("small", x) for x in t["small"]]; [fail("orphan", x) for x in t["orphans"]]; [fail("css glyph", x) for x in t["cssGlyphs"]]; [fail("mixed-font numerals", x) for x in t["mixedNum"]]
     s = await pg.evaluate(SIZES_JS)
     print("2 sizes"); [print("   ", k.ljust(16), v) for k, v in s.items() if k != "buttons"]; print("    buttons", s["buttons"][:600])
     l = await pg.evaluate(LAYOUT_JS)
     print("3 layout", "scrollWidth", l["sw"], "viewport", l["vw"])
     if l["sw"] > l["vw"]: fail("layout", f"horizontal overflow {l['sw']} > {l['vw']}: {l['overflowEls']}")
     [fail("truncation", x) for x in l["trunc"]]
+    [fail("fixed layer outside viewport", x) for x in l["fixedOut"]]
     k = await pg.evaluate(LINKS_JS)
     print("4 links/data", json.dumps(k, ensure_ascii=False))
     if k["broken"]: fail("links", f"broken anchors {k['broken']}")
@@ -261,6 +287,8 @@ async def interactions(b):
     s4 = await pg.evaluate(STATE_JS)
     toast = await pg.locator("[role=region][aria-live]").inner_text()
     print("  compare tray chips:", s4["tray"], "| toast:", toast.replace("\n", " ")[:60])
+    l = await pg.evaluate(LAYOUT_JS)
+    if l["fixedOut"]: fail("layout", f"desktop tray outside viewport {l['fixedOut']}")
     if s4["tray"] != 3 or "最多" not in toast: fail("interaction", "compare limit not enforced")
     await pg.get_by_role("button", name="开始对比").click(); await pg.wait_for_timeout(700)
     dlg = await pg.locator("[role=dialog]").count()
@@ -309,8 +337,67 @@ async def interactions(b):
     exp = await pg.locator("#g-hunyuan .ex-item").get_attribute("aria-expanded")
     print("  touch stage -> explorer:", d["sel"], "expanded", exp)
     if exp != "true": fail("interaction", "mobile stage tap did not expand Hunyuan")
+    # touch: add to compare, the tray must be fully on screen and its buttons tappable
+    await pg.locator("#exd-hunyuan").get_by_text("加入对比").tap(); await pg.wait_for_timeout(600)
+    l = await pg.evaluate(LAYOUT_JS)
+    tray = await pg.locator(".tray").bounding_box()
+    print("  touch tray box:", {k: round(v) for k, v in tray.items()}, "fixed outside:", l["fixedOut"])
+    if l["fixedOut"] or tray["x"] < 0 or tray["x"] + tray["width"] > 390: fail("layout", "mobile compare tray outside viewport")
+    await pg.locator(".tray").get_by_role("button", name="清空").tap(); await pg.wait_for_timeout(600)
+    if await pg.locator(".tray").count(): fail("interaction", "tray clear button not tappable")
     await pg.screenshot(path=str(OUT / "touch-390.png"))
     await ctx.close()
+
+async def states(b):
+    """Every reachable view, not just the default one: all 11 explorer details, all FIG.01 modes and
+    query positions, every mechanism pin, the proportional barcode mode, the compare dialog, and the
+    palette's empty state. Each state is checked with the text, numeral and layout probes."""
+    print("\n=== 5b state sweep ===")
+    def report(tag, t, l):
+        for x in t["text"]: fail("state text", f"{tag}: {x}")
+        for x in t["orphans"]: fail("state orphan", f"{tag}: {x}")
+        for x in t["mixedNum"]: fail("state numerals", f"{tag}: {x}")
+        for x in l["trunc"]: fail("state truncation", f"{tag}: {x}")
+        for x in l["fixedOut"]: fail("state fixed layer", f"{tag}: {x}")
+        if l["sw"] > l["vw"]: fail("state overflow", f"{tag}: {l['sw']} > {l['vw']}")
+    n = 0
+    for w, h, touch in [(1440, 900, False), (390, 844, True)]:
+        ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
+        pg = await ctx.new_page(); await pg.goto(URL); await settle(pg)
+        click = (lambda loc: loc.tap()) if touch else (lambda loc: loc.click())
+        for gid in ["qwen", "kimi", "minimax", "ring", "deepseek", "glm", "step", "mimo", "hunyuan", "longcat", "hysparse"]:
+            item = pg.locator(f"#g-{gid} .ex-item")
+            if await item.get_attribute("aria-current") != "true": await click(item)
+            await pg.wait_for_timeout(450)
+            report(f"{w}px explorer {gid}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        for mode in ["全局", "窗口", "稀疏", "线性"]:
+            await click(pg.get_by_role("tab", name=mode)); await pg.wait_for_timeout(200)
+            for t in [1, 4, 5, 16]:
+                await pg.evaluate(f"(() => {{ const r = document.querySelectorAll('.mask-grid i')[{(t - 1) * 16}]; r.click(); }})()"); await pg.wait_for_timeout(120)
+                report(f"{w}px FIG.01 {mode} t={t}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        for fam in ["线性", "窗口", "稀疏", "全局", "复用", "压缩", "SSM"]:
+            btn = pg.locator("[data-ts-variant=filter]", has_text=fam); await click(btn); await pg.wait_for_timeout(300)
+            report(f"{w}px pin {fam}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+            await click(btn); await pg.wait_for_timeout(300)
+        await click(pg.get_by_role("tab", name="按比例拉伸")); await pg.wait_for_timeout(500)
+        for v in ["kimi-k3", "glm-5.3-flash", "step-3.5-flash", "mimo-v2-flash"]:
+            await pg.evaluate(f"document.getElementById('ls-{v}').querySelector('.ls-bar').focus()"); await pg.keyboard.press("End"); await pg.wait_for_timeout(100)
+            report(f"{w}px barcode {v}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        for gid in ["kimi", "minimax", "hysparse"]:
+            item = pg.locator(f"#g-{gid} .ex-item")
+            if await item.get_attribute("aria-current") != "true": await click(item); await pg.wait_for_timeout(450)
+            await click(pg.locator(f"#exd-{gid}").get_by_text("加入对比")); await pg.wait_for_timeout(350)
+        report(f"{w}px compare tray", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        await click(pg.get_by_role("button", name="开始对比")); await pg.wait_for_timeout(700)
+        report(f"{w}px compare dialog", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        await pg.keyboard.press("Escape"); await pg.wait_for_timeout(400)
+        await pg.keyboard.press("Control+k"); await pg.wait_for_timeout(400); await pg.keyboard.type("不存在的模型"); await pg.wait_for_timeout(300)
+        report(f"{w}px palette empty", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        await pg.keyboard.press("Escape"); await pg.wait_for_timeout(300)
+        await pg.locator(".ex-q input").fill("zzz"); await pg.wait_for_timeout(300)
+        report(f"{w}px explorer empty", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        await ctx.close()
+    print(f"  {n} states checked")
 
 async def modes(b):
     print("\n=== 6 reduced motion / forced colors ===")
@@ -334,6 +421,7 @@ async def main():
             await audit_width(b, 390, 844)
         if ONLY in ("all", "overflow"): await overflow_widths(b)
         if ONLY in ("all", "interaction"): await interactions(b)
+        if ONLY in ("all", "states"): await states(b)
         if ONLY in ("all", "modes"): await modes(b)
         await b.close()
     print("\n" + ("ALL CHECKS PASSED" if not FAIL else f"{len(FAIL)} FAILURES:\n" + "\n".join(FAIL)))

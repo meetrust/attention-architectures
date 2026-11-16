@@ -25,7 +25,7 @@ export function SourceTable() {
               return (
                 <Table.Row key={g.id}>
                   <Table.Cell>
-                    <span className="t-no">{g.no}</span>
+                    <span className="t-no">{g.no}</span>{" "}
                     <span className="t-title"><Tail>{g.title}</Tail></span>
                   </Table.Cell>
                   <Table.Cell>

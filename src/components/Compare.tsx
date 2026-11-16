@@ -64,7 +64,7 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
         <div className="cmp-grid" style={{ "--k": Math.max(gs.length, 1) } as React.CSSProperties}>
           {gs.map((g) => (
             <section className="cmp-col" key={g.id} aria-labelledby={`cmp-${g.id}`}>
-              <h3 id={`cmp-${g.id}`}><span className="no">{g.no}</span><Tail>{g.title}</Tail></h3>
+              <h3 id={`cmp-${g.id}`}><span className="no">{g.no}</span>{" "}<Tail>{g.title}</Tail></h3>
               <div className="cmp-sec">
                 <span>ROUTE</span>
                 <div className="cmp-chips">

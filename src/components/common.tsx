@@ -72,7 +72,7 @@ export function SectionHead({ idx, title, meta, id }: { idx: string; title: stri
 
 /* ---------- 重复单元条 ---------- */
 export function UnitBar({ unit }: { unit: Unit }) {
-  const label = `重复单元 ${unit.ratio}：` + unit.segs.map((s) => cj(`${s.n} 层`, s.kind.label)).join("、");
+  const label = `重复单元（${unit.ratio}）：` + unit.segs.map((s) => cj(`${s.n} 层`, s.kind.label)).join("、");
   return (
     <div className="unit">
       <span className="unit-cells" role="img" aria-label={label}>
