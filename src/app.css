@@ -1,0 +1,16 @@
+/* 入口样式表：Tight Surface + Kumo（Tailwind v4）。顺序见 Design System「Tight Surface」的“Kumo 适配”。
+   字体在 fonts.css，用 @fontsource 自托管（与 Design System 的 kumo/demo 一致），由 main.tsx 异步加载：
+   不依赖 Google Fonts，在中国大陆同样能加载；434 条 @font-face 不阻塞首屏样式。 */
+
+/* 层顺序：ts-important 最早（!important 在较早的层反而取胜），ts-kumo 最晚（压过 Kumo 工具类） */
+@layer ts-important, theme, base, ts-base, components, utilities, ts-kumo;
+
+@import "tailwindcss";
+@import "@cloudflare/kumo/styles/tailwind";
+@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
+
+@import "./tight-surface/tokens.css";                 /* 不加 layer：TS token 压过 Tailwind 同名默认值 */
+@import "./tight-surface/bundle.css" layer(ts-base);  /* TS 组件类与元素样式让位给 Kumo 工具类 */
+@import "./page.css" layer(ts-base);                  /* 本页版式，与 bundle.css 同层 */
+@import "./kumo-ts/kumo-tight-surface.css";
+@import "./overrides.css";                            /* 不加 layer：iOS 输入框字号、强制颜色下的选中态 */

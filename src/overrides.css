@@ -1,0 +1,13 @@
+/* 不分层的少量补丁：只在特定环境生效，需要压过 Kumo 的工具类。 */
+
+/* iOS Safari：输入框字号小于 16px 时，聚焦会把页面放大，横向出现滚动 */
+@supports (-webkit-touch-callout: none) {
+  .ex-q input { font-size: 16px; }
+}
+
+/* Windows 强制颜色主题：Kumo 的选中态只靠背景色，会被系统色盖掉，这里补一条系统高亮描边 */
+@media (forced-colors: active) {
+  [data-ts-variant="filter"][aria-pressed="true"],
+  [role="tab"][aria-selected="true"],
+  .ex-item[aria-current="true"] { outline: 2px solid Highlight; outline-offset: 2px; }
+}
