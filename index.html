@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="day" data-mode="light">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -10,7 +10,8 @@
     <title>大模型 Attention 架构与技术路线对照</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f4f6f9'/%3E%3Crect x='6' y='6' width='4' height='20' rx='1' fill='%236248cc'/%3E%3Crect x='12' y='6' width='4' height='20' rx='1' fill='%236248cc'/%3E%3Crect x='18' y='6' width='4' height='20' rx='1' fill='%236248cc'/%3E%3Crect x='24' y='6' width='2.5' height='20' rx='1' fill='%23995300'/%3E%3C/svg%3E" />
   </head>
-  <body>
+  <!-- 主题属性放在 body 上：claude.ai 会在 <html> 上写自己的 data-theme（dark / light），放在 html 上会被覆盖成暗夜 token -->
+  <body data-theme="day" data-mode="light">
     <div id="root"></div>
     <!--noscript-->
     <script type="module" src="/src/main.tsx"></script>

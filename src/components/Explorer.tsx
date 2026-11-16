@@ -121,6 +121,14 @@ export function Explorer({ sel, setSel, compare, onToggleCompare, onCopy, onShow
   const visible = list.find((g) => g.id === sel);
   const current = visible ?? (narrow ? undefined : list[0]);
 
+  // 从路线图或快速定位选中一组、而它被当前搜索或筛选挡住时，清掉筛选，让选中的组可见
+  React.useEffect(() => {
+    if (!sel) return;
+    const g = GROUPS.find((x) => x.id === sel);
+    const hidden = g && ((needle && !groupHaystack(g).includes(needle)) || (fam !== "all" && !groupFamilies(g).includes(fam as FamId)));
+    if (hidden) { setQ(""); setFam("all"); }
+  }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 宽屏：当前项被筛掉时，详情跟到列表第一项
   React.useEffect(() => {
     if (!narrow && list.length && !visible) setSel(list[0].id);

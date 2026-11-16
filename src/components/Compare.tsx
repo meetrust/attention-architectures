@@ -53,7 +53,7 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
   const gs = ids.map((id) => GROUPS.find((g) => g.id === id)!);
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog size="xl" className="w-[min(1080px,calc(100vw-32px))] max-w-none max-h-[calc(100dvh-48px)] overflow-auto p-0">
+      <Dialog size="xl" className="w-[calc(100vw-32px)] sm:w-[min(1080px,calc(100vw-48px))] max-w-none max-h-[calc(100dvh-48px)] overflow-auto p-0">
         <div className="cmp-head">
           <div>
             <Dialog.Title className="text-xl font-black">对比 {gs.length} 组模型</Dialog.Title>

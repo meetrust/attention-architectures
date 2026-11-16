@@ -72,13 +72,14 @@ npm run check      # 数据自检 · check layer counts and references
 ## 项目结构 · Structure
 
 ```
-src/data.ts               唯一数据源 · single source of the page data
-src/components/           页面各节 · page sections
-src/tight-surface/        Tight Surface 设计 token 与组件样式 · design tokens and component styles
-src/kumo-ts/              Kumo 适配层 · Kumo adapter for Tight Surface
-scripts/check-data.mjs    数据自检 · data self-check
-scripts/readme-tables.mjs 生成本文件的表格 · generates the tables in this README
-tools/                    页面检查脚本 · page QA scripts
+src/data.ts                  唯一数据源 · single source of the page data
+src/components/              页面各节 · page sections
+src/tight-surface/           Tight Surface 设计 token 与组件样式 · design tokens and component styles
+src/kumo-ts/                 Kumo 适配层 · Kumo adapter for Tight Surface
+scripts/check-data.mjs       数据自检 · data self-check
+scripts/readme-tables.mjs    生成本文件的表格 · generates the tables in this README
+scripts/inline-artifact.mjs  生成单文件版本 · builds the single-file version
+tools/                       页面检查脚本 · page QA scripts
 ```
 
 ## 数据说明 · Data notes

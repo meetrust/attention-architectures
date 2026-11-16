@@ -87,7 +87,7 @@ TEXT_JS = r"""() => {
       const v = rule.style.getPropertyValue(prop);
       if (v && GLYPH.test(v)) out.cssGlyphs.push(where + ' ' + (rule.selectorText || '') + ' { ' + prop + ': ' + v + ' }');
     } } };
-  for (const sh of document.styleSheets) { try { walk(sh.cssRules, sh.href ? sh.href.split('/').pop() : '<style>'); } catch (e) { out.cssGlyphs.push('unreadable ' + sh.href); } }
+  for (const sh of document.styleSheets) { try { walk(sh.cssRules, sh.href ? sh.href.split('/').pop() : '<style>'); } catch (e) { if (!/fonts\.googleapis\.com/.test(sh.href || '')) out.cssGlyphs.push('unreadable ' + sh.href); } }
   for (const el of document.querySelectorAll('body *')) for (const ps of ['::before', '::after', '::marker']) {
     const v = getComputedStyle(el, ps).content;
     if (v && v !== 'none' && v !== 'normal' && GLYPH.test(v)) out.cssGlyphs.push('rendered ' + el.className + ps + ' ' + v);
@@ -193,7 +193,9 @@ async def audit_width(b, w, h=900):
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    # axe-core fetches cross-origin stylesheets to inspect them; under the artifact CSP that fetch of the
+    # Google Fonts sheet is refused. It comes from the checker, not the page, so it is not counted.
+    pg.on("console", lambda m: errs.append(m.text) if m.type == "error" and not ("fonts.googleapis.com" in m.text and "connect-src" in m.text) else None)
     await pg.goto(URL); await settle(pg)
     t = await pg.evaluate(TEXT_JS)
     print("1 text"); [fail("text", x) for x in t["text"]]; [fail("small", x) for x in t["small"]]; [fail("orphan", x) for x in t["orphans"]]; [fail("css glyph", x) for x in t["cssGlyphs"]]; [fail("mixed-font numerals", x) for x in t["mixedNum"]]
@@ -310,6 +312,13 @@ async def interactions(b):
     s5 = await pg.evaluate(STATE_JS)
     print("  palette -> selected:", s5["sel"])
     if s5["sel"] != "小米 MiMo-V2-Flash": fail("interaction", "palette did not open MiMo")
+    # a selection from the palette must stay visible even when the explorer search hides that group
+    await pg.locator(".ex-q input").fill("KDA"); await pg.wait_for_timeout(300)
+    await pg.keyboard.press("Control+k"); await pg.wait_for_timeout(400); await pg.keyboard.type("LongCat"); await pg.wait_for_timeout(300)
+    await pg.keyboard.press("Enter"); await pg.wait_for_timeout(1200)
+    s6 = await pg.evaluate(STATE_JS); q = await pg.locator(".ex-q input").input_value()
+    print("  palette over a filtered list -> selected:", s6["sel"], "| search now:", repr(q))
+    if s6["sel"] != "美团 LongCat-2.0" or q: fail("interaction", "palette selection hidden by explorer search")
     # keyboard focus ring
     await pg.keyboard.press("Tab"); fr = await pg.evaluate("(() => { const e = document.activeElement; const s = getComputedStyle(e); return e.tagName + ' ' + s.outlineStyle + ' ' + s.outlineWidth + ' ' + s.outlineColor + ' off ' + s.outlineOffset })()")
     print("  focus ring:", fr)
@@ -407,6 +416,17 @@ async def modes(b):
     sb = await pg.evaluate("getComputedStyle(document.documentElement).scrollBehavior")
     print("  reduced motion: h1 opacity after 300ms", op, "scroll-behavior", sb)
     if float(op) < 0.99 or sb != "auto": fail("motion", "reduced motion still animates")
+    await ctx.close()
+    # claude.ai writes its own data-theme ("dark" / "light") on <html>: the page must stay in the Day theme
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}); pg = await ctx.new_page()
+    await pg.goto(URL); await settle(pg)
+    for host in ["dark", "light"]:
+        await pg.evaluate(f"document.documentElement.setAttribute('data-theme', '{host}')"); await pg.wait_for_timeout(200)
+        bg = await pg.evaluate("getComputedStyle(document.body).backgroundColor")
+        ink = await pg.evaluate("getComputedStyle(document.querySelector('.hero h1')).color")
+        cs = await pg.evaluate("getComputedStyle(document.documentElement).colorScheme")
+        print(f"  host data-theme={host}: body {bg}, h1 {ink}, html color-scheme {cs}")
+        if bg != "rgb(244, 246, 249)" or ink != "rgb(18, 24, 38)" or cs != "light": fail("theme", f"page leaves the Day theme when the host sets data-theme={host}")
     await ctx.close()
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, forced_colors="active"); pg = await ctx.new_page()
     await pg.goto(URL); await settle(pg)

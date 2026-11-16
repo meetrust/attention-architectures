@@ -14,7 +14,7 @@ function noscriptTable(): Plugin {
     name: "noscript-table",
     transformIndexHtml(html) {
       const rows = GROUPS.map((g) => {
-        const arch = g.versions.map((v) => `${esc(v.name)}：${esc(v.arch)}`).join("<br>");
+        const arch = g.versions.map((v) => `${esc(v.name)}：${esc(v.arch)}` + (v.note ? `<br><small>更正：${esc(v.note)}</small>` : "")).join("<br>");
         const route = g.stages.map((s) => esc(s.route)).join(" → ");
         const refs = [...new Set(g.versions.flatMap((v) => v.refs))].map((n) => `[${String(n).padStart(2, "0")}]`).join(" ");
         return `<tr><th scope="row">${g.no} ${esc(g.title)}</th><td>${arch}</td><td>${route}</td><td>${refs}</td></tr>`;

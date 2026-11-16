@@ -85,8 +85,8 @@ function StackRow({ v, mode, cur, setCur, focused }: {
           >
             <motion.div
               className="ls-cells"
-              style={{ "--n": n } as React.CSSProperties}
-              variants={{ hidden: { clipPath: "inset(0 100% 0 0)" }, show: { clipPath: "inset(0 0% 0 0)" } }}
+              variants={{ hidden: { scaleY: 0.55 }, show: { scaleY: 1 } }}
+              style={{ "--n": n, transformOrigin: "50% 100%" } as React.CSSProperties}
             >
               {s.seq.map((k, i) => (
                 <i key={i} style={cvar(s.kinds[k].fam)} data-on={mine === i + 1 || undefined} />

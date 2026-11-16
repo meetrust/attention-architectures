@@ -5,6 +5,11 @@
    签名图是“注意力读取范围”与“层序条码”。所有颜色、间距、字号都读 token。
    ========================================================================== */
 
+/* ---------- 主题 ----------
+   Day 主题挂在 <body data-theme="day">：claude.ai 会改写 <html> 的 data-theme，
+   所以 html 上只补 color-scheme，让滚动条和画布也是浅色。 */
+html:has(> body[data-theme="day"]), body[data-theme="day"] { color-scheme: light; }
+
 /* ---------- 版心与节 ---------- */
 html { scroll-padding-top: calc(var(--nav-h) + var(--sp-4)); }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
@@ -21,7 +26,6 @@ body { overflow-x: hidden; }
 .sec { padding-top: var(--sp-8); scroll-margin-top: calc(var(--nav-h) + var(--sp-4)); }
 .sec > .sh { margin-bottom: var(--sp-5); }
 .sec-lead { margin: calc(-1 * var(--sp-2)) 0 var(--sp-5); max-width: 760px; color: var(--dim); font-size: var(--fs-base); line-height: 1.75; }
-.amber { color: var(--amber); }
 .skip {
   position: absolute; left: var(--sp-4); top: -100px; z-index: 100;
   display: inline-flex; align-items: center; min-height: var(--h-filter); padding: 0 var(--sp-3);
@@ -294,7 +298,6 @@ body { overflow-x: hidden; }
 .app[data-tray="on"] .totop.fixed { bottom: calc(var(--sp-9) + var(--sp-5) + env(safe-area-inset-bottom)); }
 
 /* 对比对话框 */
-.cmp-dialog { width: min(1080px, calc(100vw - 2 * var(--sp-4))); max-width: none; max-height: calc(100dvh - 2 * var(--sp-5)); overflow: auto; }
 .cmp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-5) var(--sp-5) var(--sp-3); }
 .cmp-head h2 { margin: 0; font-size: var(--fs-xl); font-weight: 900; line-height: 1.35; }
 .cmp-head p { margin: 4px 0 0; font-size: var(--fs-sm); color: var(--dim); }

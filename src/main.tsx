@@ -8,8 +8,9 @@ if (import.meta.env.MODE !== "artifact") void import("./fonts.css");
 import { applyTheme } from "./kumo-ts/theme";
 import { App } from "./App";
 
-// 本页只用 Day（白昼）主题：<html data-theme="day" data-mode="light">，与 index.html 一致。
-applyTheme("day");
+// 本页只用 Day（白昼）主题，属性放在 <body> 上（与 index.html 一致）：
+// claude.ai 的 Artifact 会在 <html> 上写自己的 data-theme="dark" / "light"，写在 html 上的 day 会被顶掉。
+applyTheme("day", document.body);
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
