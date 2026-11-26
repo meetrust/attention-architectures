@@ -2,19 +2,13 @@ import * as React from "react";
 import { Slider, Tabs } from "@cloudflare/kumo";
 import { motion, useReducedMotion } from "motion/react";
 import { Chip } from "../kumo-ts/adapters";
-import { FAM, FAMILIES, GROUPS, MODEL_COUNT, REFS, type FamId } from "../data";
+import { FAM, FAMILIES, GROUPS, MODEL_COUNT, REFS } from "../data";
 import { Tail, cvar } from "./common";
 import { FlowStage } from "./FlowStage";
-import { K, N, W, readSet, type Mode } from "../scene/attention";
+import { K, MODES, N, W, readSet, type Mode } from "../scene/attention";
 
 /* ---------- FIG.01 注意力读取范围（示意） ---------- */
-// 示意模型（N、W、K、readSet）放在 scene/attention.ts，掩码网格与流动视图共用
-const MODES: { id: Mode; fam: FamId; label: string }[] = [
-  { id: "full", fam: "full", label: "全局" },
-  { id: "swa", fam: "swa", label: "窗口" },
-  { id: "sparse", fam: "sparse", label: "稀疏" },
-  { id: "linear", fam: "linear", label: "线性" },
-];
+// 示意模型（N、W、K、readSet）与四种方式放在 scene/attention.ts，掩码网格、流动视图和 FIG.04 共用
 
 type View = "flow" | "grid";
 const VIEWS: { value: View; label: string }[] = [
@@ -36,7 +30,6 @@ function MaskFigure() {
   const [mode, setMode] = React.useState<Mode>("swa");
   const [t, setT] = React.useState(12);
   const [view, setView] = React.useState<View>("flow");
-  const fam = MODES.find((m) => m.id === mode)!.fam;
   const cur = React.useMemo(() => readSet(mode, t), [mode, t]);
   const n = { full: t, swa: Math.min(t, W), sparse: Math.min(t, K) };
 
@@ -52,8 +45,8 @@ function MaskFigure() {
       ? <>前 <b>{t - 1}</b> 个位置已折叠进一份固定大小的状态，这一步只读取<span className="nw">状态和自身。</span></>
       : <>第 1 个 token 还没有历史，状态为空，<span className="nw">只读取自身。</span></>,
   };
-  const ariaGrid = `${N} × ${N} 注意力掩码示意，当前方式：${FAM[fam].name}，查询位置 t = ${t}。`;
-  const ariaFlow = `${N} 个 token 的读取流向示意，当前方式：${FAM[fam].name}，查询位置 t = ${t}，` +
+  const ariaGrid = `${N} × ${N} 注意力掩码示意，当前方式：${FAM[mode].name}，查询位置 t = ${t}。`;
+  const ariaFlow = `${N} 个 token 的读取流向示意，当前方式：${FAM[mode].name}，查询位置 t = ${t}，` +
     (mode !== "linear" ? `读取 ${cur.size} 个位置（含自身）。` : t > 1 ? "读取 1 份固定大小的状态和自身。" : "只读取自身。");
 
   return (
@@ -68,11 +61,10 @@ function MaskFigure() {
             variant="segmented"
             value={mode}
             onValueChange={(v) => setMode(v as Mode)}
-            tabs={MODES.map((m) => ({ value: m.id, label: m.label }))}
+            tabs={MODES.map((m) => ({ value: m, label: FAM[m].short }))}
           />
           <Tabs
             variant="segmented"
-            className="mask-view"
             value={view}
             onValueChange={(v) => setView(v as View)}
             tabs={VIEWS}
@@ -83,12 +75,12 @@ function MaskFigure() {
         </div>
         <div className="mask-wrap" data-view={view}>
           {view === "flow" ? (
-            <FlowStage mode={mode} t={t} fam={fam} label={ariaFlow} onPick={setT} />
+            <FlowStage mode={mode} t={t} label={ariaFlow} onPick={setT} />
           ) : (
           <div className="mask-axes">
             <span className="ax-x" aria-hidden="true">KEY 位置 j</span>
             <span className="ax-y" aria-hidden="true">QUERY t</span>
-            <div className="mask-grid" role="img" aria-label={ariaGrid} style={cvar(fam)}>
+            <div className="mask-grid" role="img" aria-label={ariaGrid} style={cvar(mode)}>
               {Array.from({ length: N * N }, (_, k) => {
                 const r = Math.floor(k / N) + 1;
                 const c = (k % N) + 1;
@@ -108,16 +100,13 @@ function MaskFigure() {
           <div className="mask-read">
             <p className="mask-say" aria-live="polite">{say[mode]}</p>
             <ul className="bars mask-bars" aria-label={`t = ${t} 时各方式读取的历史位置数`}>
-              {(["full", "swa", "sparse"] as const).map((m) => {
-                const f = MODES.find((x) => x.id === m)!.fam;
-                return (
-                  <li key={m} data-on={mode === m} style={cvar(f)}>
-                    <span className="nm">{FAM[f].short}</span>
-                    <span className="tr"><span style={{ "--v": (n[m] / N) * 100 } as React.CSSProperties} /></span>
-                    <span className="vl">{n[m]}</span>
-                  </li>
-                );
-              })}
+              {(["full", "swa", "sparse"] as const).map((m) => (
+                <li key={m} data-on={mode === m} style={cvar(m)}>
+                  <span className="nm">{FAM[m].short}</span>
+                  <span className="tr"><span style={{ "--v": (n[m] / N) * 100 } as React.CSSProperties} /></span>
+                  <span className="vl">{n[m]}</span>
+                </li>
+              ))}
             </ul>
             <p className="mask-state"><i aria-hidden="true" /><span>线性：读取 1 份固定大小的状态，<span className="nw">与 t 无关</span></span></p>
           </div>

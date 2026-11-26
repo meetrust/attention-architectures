@@ -10,7 +10,8 @@
     "preview": "vite preview --port 4173",
     "check": "node scripts/check-data.mjs",
     "lint": "eslint src",
-    "build:artifact": "tsc --noEmit -p . && vite build --mode artifact && node scripts/inline-artifact.mjs"
+    "build:artifact": "tsc --noEmit -p . && vite build --mode artifact && node scripts/inline-artifact.mjs",
+    "readme:tables": "node scripts/readme-tables.mjs"
   },
   "dependencies": {
     "@cloudflare/kumo": "2.18.1",

@@ -33,7 +33,7 @@ export function buildRouteScene(g: Group, vi: number, width: number): Scene {
   const gap = 12;
   const bw = Math.min(112, (w - 2 * PAD - (fams.length - 1) * gap) / fams.length);
   const bx0 = (w - (fams.length * bw + (fams.length - 1) * gap)) / 2;
-  ents.mnote = { x: PAD, y: MECH_Y - 2, w: 0, h: 0, cls: "none", enter: "fade", label: "机制", labelAt: "tl", labelCls: "is-note" };
+  ents.mnote = { x: PAD, y: MECH_Y - 2, w: 0, h: 0, cls: "none", enter: "fade", label: "机制", labelAt: "tl" };
   fams.forEach((f, k) => {
     ents[`m-${f}`] = {
       x: bx0 + k * (bw + gap), y: MECH_Y, w: bw, h: MECH_H, r: 6,
@@ -67,13 +67,13 @@ export function buildRouteScene(g: Group, vi: number, width: number): Scene {
     // 比例不同时作为新标签淡入，不在原处换字
     ents[`ratio:${v.unit.ratio}`] = {
       x: cx0, y: CELL_Y, w: n * cw + (n - 1) * cg, h: CELL_H, cls: "none", enter: "fade",
-      label: `重复单元：${v.unit.ratio}`, labelAt: "b", labelCls: "is-note",
+      label: `重复单元：${v.unit.ratio}`, labelAt: "b",
     };
   } else {
     const nw = Math.min(240, w - 2 * PAD);
     ents.none = {
       x: (w - nw) / 2, y: CELL_Y, w: nw, h: CELL_H, r: 6, cls: "cell-none", enter: "fade",
-      label: v.stack ? `完整 ${v.stack.seq.length} 层见 FIG.04` : "原文未列重复单元", labelCls: "is-note",
+      label: v.stack ? `完整 ${v.stack.seq.length} 层见 FIG.04` : "原文未列重复单元",
     };
   }
 

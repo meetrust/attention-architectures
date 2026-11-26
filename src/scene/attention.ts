@@ -3,16 +3,20 @@
  * 掩码网格与流动视图共用这里的 readSet，两种视图读取的位置永远一致。
  */
 import type { EntSpec, LinkSpec, Scene } from "./engine";
+import type { FamId } from "../data";
 
 export const N = 16; // token 数
 export const W = 4; // 窗口
 export const K = 4; // Top-k（含自身）
 
-export type Mode = "full" | "swa" | "sparse" | "linear";
+/** 四种读取方式：id 就是机制家族的 id，名称和颜色都从 FAM 取，不另立对照表。 */
+export const MODES = ["full", "swa", "sparse", "linear"] as const satisfies readonly FamId[];
+export type Mode = (typeof MODES)[number];
+export const isMode = (f: FamId): f is Mode => (MODES as readonly FamId[]).includes(f);
 
 /** 示意用的确定性“索引器分数”：同一个 t 每次挑出的位置都一样。 */
-export const score = (t: number, j: number) => (j * 37 + t * 11 + j * j * 5) % 29;
-export const SCORE_MAX = 28;
+const score = (t: number, j: number) => (j * 37 + t * 11 + j * j * 5) % 29;
+const SCORE_MAX = 28;
 
 export function readSet(mode: Mode, t: number): Set<number> {
   const all = Array.from({ length: t }, (_, i) => i + 1);
@@ -58,13 +62,13 @@ export function buildFlowScene(mode: Mode, t: number, width: number): Scene {
     ents.win = {
       x: keyX(lo) - 4, y: KEY_Y - 5, w: (t - lo) * pitch + tokW + 8, h: KEY_H + 10, r: 6,
       cls: "zone", layer: "back", enter: "fade",
-      label: `窗口 w = ${W}`, labelAt: "tl", labelCls: "is-note",
+      label: `窗口 w = ${W}`, labelAt: "tl",
     };
   }
 
   // 稀疏：索引器给前 t − 1 个位置打分，柱高 = 分数，选中的 Top-k 用机制色
   if (mode === "sparse" && t > K) {
-    ents.idx = { x: PAD, y: 22, w: 0, h: 0, cls: "none", enter: "fade", label: "索引器打分", labelAt: "tl", labelCls: "is-note" };
+    ents.idx = { x: PAD, y: 22, w: 0, h: 0, cls: "none", enter: "fade", label: "索引器打分", labelAt: "tl" };
     for (let j = 1; j < t; j++) {
       const h = 3 + (score(t, j) / SCORE_MAX) * 24;
       ents[`s${j}`] = {

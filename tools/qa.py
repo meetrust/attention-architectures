@@ -504,9 +504,23 @@ async def modes(b):
         print(f"  host data-theme={host}: body {bg}, h1 {ink}, html color-scheme {cs}")
         if bg != "rgb(244, 246, 249)" or ink != "rgb(18, 24, 38)" or cs != "light": fail("theme", f"page leaves the Day theme when the host sets data-theme={host}")
     await ctx.close()
+    # WCAG 2.2.2：自动开始的数据包流动在 5 秒内停下，下一次操作再开始
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}); pg = await ctx.new_page()
+    await pg.goto(URL); await pg.wait_for_timeout(1500)
+    early = await pg.evaluate("document.querySelectorAll('.scene-stage .pkt').length")
+    await pg.wait_for_timeout(4500)
+    late = await pg.evaluate("document.querySelectorAll('.scene-stage .pkt').length")
+    await pg.get_by_role("tab", name="全局").click(); await pg.wait_for_timeout(1800)
+    again = await pg.evaluate("document.querySelectorAll('.scene-stage .pkt').length")
+    print(f"  packets after load: {early} at 1.5 s, {late} at 6 s; {again} again after an interaction")
+    if late or not early or not again: fail("motion", "packet flow does not stop within 5 s or does not restart after an interaction")
+    await ctx.close()
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, forced_colors="active"); pg = await ctx.new_page()
     await pg.goto(URL); await settle(pg)
     await pg.screenshot(path=str(OUT / "forced-colors.png"), full_page=True)
+    ol = await pg.evaluate("getComputedStyle(document.querySelector('.rp-ver[aria-current=step]')).outlineStyle")
+    print("  forced colors: current FIG.02 version outline", ol)
+    if ol == "none": fail("forced colors", "the current FIG.02 version is not marked in forced-colors mode")
     await ctx.close()
 
 async def main():

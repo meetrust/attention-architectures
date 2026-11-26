@@ -4,19 +4,17 @@ import { motion } from "motion/react";
 import { Pause, Play } from "lucide-react";
 import { FAM, MAX_DEPTH, STACKED, stackCounts, type FamId } from "../data";
 import { TsButton } from "../kumo-ts/adapters";
-import type { Mode as ReadMode } from "../scene/attention";
+import { isMode } from "../scene/attention";
 import { FlowStage } from "./FlowStage";
 import { SectionHead, Tail, cvar, glue } from "./common";
 
-/** 逐层读取：层的机制 → FIG.01 的四种读取方式（4 个版本只用到这四类）。 */
-const READ_MODE: Partial<Record<FamId, ReadMode>> = { linear: "linear", swa: "swa", sparse: "sparse", full: "full" };
 const READ_T = 12; // 与 FIG.01 默认的查询位置一致
 // 逐层播放：机制刚切换的层多停一会儿，让读取图画完；同类层连续时走快一些
 const DWELL_SWITCH = 1300;
 const DWELL_SAME = 450;
 
 type Mode = "abs" | "fit";
-type Cur = { id: string; i: number } | null;
+type Cur = { id: string; i: number };
 
 /** 图例：只列 4 个版本里实际出现的层类型，按机制家族上色。 */
 const LEGEND = (() => {
@@ -39,7 +37,7 @@ function StackRow({ v, mode, cur, setCur, focused }: {
   const s = v.stack!;
   const n = s.seq.length;
   const counts = stackCounts(s);
-  const mine = cur?.id === v.id ? cur.i : null;
+  const mine = cur.id === v.id ? cur.i : null;
   const value = mine ?? 1;
   const kind = s.kinds[s.seq[value - 1]];
   const drag = React.useRef(false);
@@ -132,7 +130,7 @@ export function Layers({ focus }: { focus: string | null }) {
 
   // 逐层播放：从当前层往后走，走到最后一层停下
   React.useEffect(() => {
-    if (!playing || !cur) return;
+    if (!playing) return;
     const v = STACKED.find((x) => x.id === cur.id)!;
     const { seq, kinds } = v.stack!;
     if (cur.i >= seq.length) { setPlaying(false); return; }
@@ -144,17 +142,17 @@ export function Layers({ focus }: { focus: string | null }) {
 
   const togglePlay = () => {
     if (playing) { setPlaying(false); return; }
-    const v = STACKED.find((x) => x.id === cur?.id) ?? STACKED[0];
+    const v = STACKED.find((x) => x.id === cur.id)!;
     // 已在最后一层时从头开始
-    if (!cur || cur.i >= v.stack!.seq.length) setCurRaw({ id: v.id, i: 1 });
+    if (cur.i >= v.stack!.seq.length) setCurRaw({ id: v.id, i: 1 });
     setPlaying(true);
   };
 
-  const active = cur ? STACKED.find((v) => v.id === cur.id)! : null;
-  const ak = active ? active.stack!.kinds[active.stack!.seq[cur!.i - 1]] : null;
-  const before = active
-    ? active.stack!.kinds.map((_, k) => active.stack!.seq.slice(0, cur!.i).filter((x) => x === k).length)
-    : [];
+  // 当前层：默认停在第一个版本的第 1 层，所以总有一层被选中
+  const active = STACKED.find((v) => v.id === cur.id)!;
+  const { kinds, seq } = active.stack!;
+  const ak = kinds[seq[cur.i - 1]];
+  const before = kinds.map((_, k) => seq.slice(0, cur.i).filter((x) => x === k).length);
 
   return (
     <section className="sec wrap" id="layers" aria-labelledby="layers-h">
@@ -192,29 +190,22 @@ export function Layers({ focus }: { focus: string | null }) {
           <div className="ls-panel">
             <div className="ls-side">
               <p className="ls-read" aria-hidden="true">
-                {active && ak ? (
-                  <>
-                    <span><b>{glue(active.name)}</b>&nbsp;· 第 <b>{cur!.i}</b>&nbsp;/ {active.stack!.seq.length} 层</span>
-                    <span className="lvl" style={cvar(ak.fam)}>{glue(`${ak.label} · ${FAM[ak.fam].name}`)}</span>
-                    <span>到这一层为止：{active.stack!.kinds.map((k, i) => `${before[i]} ${k.label}`).join("、")}</span>
-                  </>
-                ) : (
-                  <span>把鼠标移到条码上，或用手指横向滑动，这里会显示该层的类型。</span>
-                )}
+                <span><b>{glue(active.name)}</b>&nbsp;· 第 <b>{cur.i}</b>&nbsp;/ {seq.length} 层</span>
+                <span className="lvl" style={cvar(ak.fam)}>{glue(`${ak.label} · ${FAM[ak.fam].name}`)}</span>
+                <span>到这一层为止：{kinds.map((k, i) => `${before[i]} ${k.label}`).join("、")}</span>
               </p>
               <TsButton onClick={togglePlay} icon={playing ? <Pause /> : <Play />}>
-                {playing ? "暂停播放" : `逐层播放 ${glue(active?.name ?? STACKED[0].name)}`}
+                {playing ? "暂停播放" : `逐层播放 ${glue(active.name)}`}
               </TsButton>
               <p className="ls-note">
                 <Tail>{`读取图画的是当前这一层怎么读历史，示意与 FIG.01 相同：16 个 token，查询位置 t\u00a0=\u00a0${READ_T}。`}</Tail>
               </p>
             </div>
-            {active && ak && READ_MODE[ak.fam] ? (
+            {isMode(ak.fam) ? (
               <FlowStage
-                mode={READ_MODE[ak.fam]!}
+                mode={ak.fam}
                 t={READ_T}
-                fam={ak.fam}
-                label={`${active.name} 第 ${cur!.i} 层 ${ak.label} 的读取示意：${FAM[ak.fam].name}，查询位置 t = ${READ_T}。`}
+                label={`${active.name} 第 ${cur.i} 层 ${ak.label} 的读取示意：${FAM[ak.fam].name}，查询位置 t = ${READ_T}。`}
               />
             ) : null}
           </div>

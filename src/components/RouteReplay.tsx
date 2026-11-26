@@ -7,7 +7,7 @@ import { SceneStage } from "./SceneStage";
 import { FamDots, RouteArrow, Tail, cj, cvar, glue } from "./common";
 
 /** 能回放的组：至少有两个版本。 */
-export const REPLAY = GROUPS.filter((g) => g.versions.length > 1);
+const REPLAY = GROUPS.filter((g) => g.versions.length > 1);
 const ITEMS: Record<string, string> = Object.fromEntries(REPLAY.map((g) => [g.id, `${g.no} ${g.title}`]));
 const DEFAULT = REPLAY.find((g) => g.id === "minimax")!.id;
 
@@ -74,18 +74,18 @@ export function RouteReplay() {
         <p className="rp-head">
           <b>{glue(v.name)}</b>
           <span className="rp-step">{vi + 1}&nbsp;/ {g.versions.length}</span>
-          <span className="rp-route">路线：{stage.route}</span>
+          <span>路线：{stage.route}</span>
         </p>
         <p className="rp-arch"><Tail>{v.arch}</Tail></p>
         {prev ? (
           <p className="rp-diff">
-            <span className="rp-diff-k">相比 {glue(g.versions[vi - 1].name)}</span>
+            <span>相比 {glue(g.versions[vi - 1].name)}</span>
             {added.length ? <span className="rp-diff-g"><span>新增</span>{added.map((f) => <Chip key={f} c={FAM[f].c}>{FAM[f].short}</Chip>)}</span> : null}
             {dropped.length ? <span className="rp-diff-g"><span>去掉</span>{dropped.map((f) => <Chip key={f} c={FAM[f].c}>{FAM[f].short}</Chip>)}</span> : null}
             {kept.length ? <span className="rp-diff-g"><span>保留</span>{kept.map((f) => <Chip key={f} c={FAM[f].c}>{FAM[f].short}</Chip>)}</span> : null}
           </p>
         ) : (
-          <p className="rp-diff"><span className="rp-diff-k"><Tail>这一组的第一个版本，点上方的版本继续回放。</Tail></span></p>
+          <p className="rp-diff"><span><Tail>这一组的第一个版本，点上方的版本继续回放。</Tail></span></p>
         )}
         {v.unit ? (
           <ul className="fig-key rp-key" aria-label={unitText}>

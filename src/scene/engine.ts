@@ -8,49 +8,34 @@
  *   4. 连线：等两端实体都到位后再画出来；画完的连线按 flow（个 / 秒）持续发出数据包。
  *
  * Tight Surface 原则 9：SVG 只画线和形状，所有文字是叠在上面的 HTML；坐标是容器实测的 px，不靠 viewBox 缩放。
- * 原则 3：一种缓动、一种时长（与 tokens.css 的 --ease / --dur 一致），先后顺序靠延迟编排。
- * 原则 5：减少动效时 goTo 直接跳到终态，不发数据包。
+ * 原则 3：一种缓动、一种时长（与 tokens.css 的 --ease / --dur 一致），先后顺序靠延迟编排；入场 rise 上移 14px、
+ *        柱 grow 从 12% 展开，与 Design System“动效”一节相同。数据包每次切换画面后最多流动 FLOW_BUDGET 秒。
+ * 原则 5：减少动效时 goTo 直接跳到终态，不发数据包。WCAG 2.2.2：自动开始的动态内容在 5 秒内停下。
  */
 
-export type Ease = (x: number) => number;
-
-/** CSS cubic-bezier() 的 JS 版本：牛顿迭代，不收敛时退回二分。 */
-export function cubicBezier(x1: number, y1: number, x2: number, y2: number): Ease {
-  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
-  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
-  const sx = (t: number) => ((ax * t + bx) * t + cx) * t;
-  const sy = (t: number) => ((ay * t + by) * t + cy) * t;
-  const dsx = (t: number) => (3 * ax * t + 2 * bx) * t + cx;
-  return (x) => {
-    if (x <= 0) return 0;
-    if (x >= 1) return 1;
-    let t = x;
-    for (let i = 0; i < 8; i++) {
-      const e = sx(t) - x;
-      if (Math.abs(e) < 1e-5) return sy(t);
-      const d = dsx(t);
-      if (Math.abs(d) < 1e-6) break;
-      t -= e / d;
-    }
-    let lo = 0, hi = 1;
-    t = x;
-    for (let i = 0; i < 24; i++) {
-      if (sx(t) < x) lo = t; else hi = t;
-      t = (lo + hi) / 2;
-    }
-    return sy(t);
-  };
-}
-
-/** 与 tokens.css 一致：--ease: cubic-bezier(.2, .7, .2, 1); --dur: .28s */
-export const EASE = cubicBezier(0.2, 0.7, 0.2, 1);
-export const DUR = 280;
+/** --ease: cubic-bezier(.2, .7, .2, 1) 的 JS 版本：二分求出 x 对应的参数，再算 y。 */
+const EASE = (x: number) => {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const bez = (t: number, p1: number, p2: number) => 3 * (1 - t) * (1 - t) * t * p1 + 3 * (1 - t) * t * t * p2 + t * t * t;
+  let lo = 0, hi = 1, t = x;
+  for (let i = 0; i < 20; i++) {
+    if (bez(t, 0.2, 0.2) < x) lo = t; else hi = t;
+    t = (lo + hi) / 2;
+  }
+  return bez(t, 0.7, 1);
+};
+const DUR = 280; // --dur: .28s
+const RISE = 14; // 入场上移的距离，与 Design System 的 rise 一致
+const GROW = 0.12; // 柱从 12% 高度展开，与 Design System 的 grow 一致
 const STAGGER = 24; // 进入的实体之间错开的毫秒数
 const LINK_STAGGER = 18; // 新连线之间错开的毫秒数
 const SPEED = 110; // 数据包速度，px / 秒
+/** 每次切换画面后数据包可见流动的秒数：只在画面可见时计时，最后一个包也在这之前到达，之后画面静止。 */
+const FLOW_BUDGET = 4.8;
 
-/** 标签锚点：c 居中；t / b 在形状上方 / 下方居中；tl 在上方左对齐；bl / br 在下方左 / 右对齐（贴边时用，不出画面） */
-export type LabelAt = "c" | "t" | "b" | "tl" | "bl" | "br";
+/** 标签锚点：c 居中；b 在形状下方居中；tl 在上方左对齐；bl / br 在下方左 / 右对齐（贴边时用，不出画面） */
+export type LabelAt = "c" | "b" | "tl" | "bl" | "br";
 
 export interface EntSpec {
   x: number; y: number; w: number; h: number;
@@ -120,6 +105,7 @@ export class SceneEngine {
   private packets: Packet[] = [];
   private raf = 0;
   private last = 0;
+  private budget = 0;
   private visible = true;
   private reduced = false;
   private io: IntersectionObserver;
@@ -169,6 +155,7 @@ export class SceneEngine {
     this.svg.setAttribute("viewBox", `0 0 ${scene.w} ${scene.h}`); // 与 px 尺寸 1:1，不缩放
     const now = performance.now();
     if (instant) this.snap();
+    else this.budget = FLOW_BUDGET;
 
     const next = scene.ents;
     const exiting = [...this.ents.values()].filter((e) => !next[e.id] && !e.tw?.remove);
@@ -190,8 +177,7 @@ export class SceneEngine {
 
     for (const e of exiting) {
       const to = { ...e.cur, o: 0 };
-      if (e.spec.enter === "grow") { to.y = e.cur.y + e.cur.h; to.h = 0; }
-      else if (e.spec.enter !== "fade") to.y = e.cur.y - 6;
+      if (e.spec.enter === "grow") { to.y = e.cur.y + e.cur.h * (1 - GROW); to.h = e.cur.h * GROW; }
       e.tw = { from: { ...e.cur }, to, start: now, delay: 0, remove: true };
     }
     for (const e of moved) {
@@ -201,8 +187,9 @@ export class SceneEngine {
     entering.forEach(([id, spec], i) => {
       const to = { ...this.geo(spec), o: 1 };
       const from = { ...to, o: 0 };
-      if (spec.enter === "grow") { from.y = to.y + to.h; from.h = 0; from.o = 1; }
-      else if (spec.enter !== "fade") from.y = to.y + 8;
+      // grow 从 12% 展开：等待错峰的这段时间里保持透明，展开时一起淡入，不提前露出一截
+      if (spec.enter === "grow") { from.y = to.y + to.h * (1 - GROW); from.h = to.h * GROW; }
+      else if (spec.enter !== "fade") from.y = to.y + RISE;
       const e = this.addEnt(id, spec, from);
       const delay = tEnter + i * STAGGER;
       e.tw = { from, to, start: now, delay };
@@ -326,7 +313,7 @@ export class SceneEngine {
 
   private hasWork() {
     for (const e of this.ents.values()) if (e.tw) return true;
-    for (const l of this.links.values()) if (l.tw || (!this.reduced && l.spec.flow)) return true;
+    for (const l of this.links.values()) if (l.tw || (!this.reduced && this.budget > 0 && l.spec.flow)) return true;
     return this.packets.length > 0;
   }
 
@@ -385,7 +372,7 @@ export class SceneEngine {
       if (e.label) {
         const at = e.spec.labelAt ?? "c";
         const lx = at === "tl" || at === "bl" ? x : at === "br" ? x + w : x + w / 2;
-        const ly = at === "c" ? y + h / 2 : at[0] === "b" ? y + h : y;
+        const ly = at === "c" ? y + h / 2 : at === "tl" ? y : y + h;
         e.label.style.left = `${r2(lx)}px`;
         e.label.style.top = `${r2(ly)}px`;
         e.label.style.opacity = String(r2(o));
@@ -416,8 +403,10 @@ export class SceneEngine {
 
   private stepPackets(dt: number) {
     if (this.reduced) return;
+    this.budget = Math.max(0, this.budget - dt);
     for (const l of this.links.values()) {
-      if (!l.spec.flow || l.tw || l.draw < 1) continue;
+      // 只发能在预算用完前到达的包：预算结束时画面里已经没有在动的东西
+      if (!l.spec.flow || l.tw || l.draw < 1 || l.len / SPEED > this.budget) continue;
       for (l.acc += dt * l.spec.flow; l.acc >= 1; l.acc -= 1) this.spawn(l);
     }
     const keep: Packet[] = [];
@@ -464,12 +453,13 @@ export class SceneEngine {
   };
 }
 
+/** 把 CSS 变量写到元素上；上一次写过、这次没有的变量清掉。 */
 function applyVars(el: HTMLElement | SVGElement | null, vars?: Record<string, string>) {
-  if (!el) return;
-  const prev = (el as HTMLElement).dataset.vars;
-  if (prev) for (const k of prev.split(" ")) if (!vars || !(k in vars)) el.style.removeProperty(k);
-  if (vars) for (const [k, v] of Object.entries(vars)) el.style.setProperty(k, v);
-  (el as HTMLElement).dataset.vars = vars ? Object.keys(vars).join(" ") : "";
+  if (!el || (!vars && !el.dataset.vars)) return;
+  for (const k of el.dataset.vars?.split(" ") ?? []) if (!vars || !(k in vars)) el.style.removeProperty(k);
+  for (const [k, v] of Object.entries(vars ?? {})) el.style.setProperty(k, v);
+  if (vars) el.dataset.vars = Object.keys(vars).join(" ");
+  else delete el.dataset.vars;
 }
 
 /** 三次贝塞尔曲线上参数 u 处的点（p = [x1,y1, c1x,c1y, c2x,c2y, x2,y2]）。 */

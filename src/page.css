@@ -464,10 +464,7 @@ body { overflow-x: hidden; }
   .mask-grid i, .ls-cells i, .unit-cells i, .unit-key i, .fam-dot, .duo .tr span, .duo-key i, .mask-state i, .ls-tick, .scene-stage svg, .flow-labels .lbl { forced-color-adjust: none; }
   .ex-item[aria-current="true"]::before { forced-color-adjust: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .ls-row, .rr, .ex-inline { transition: none !important; }
-  .scene-stage rect, .scene-stage path { transition: none; }
-}
+/* 减少动效：bundle.css 的全局规则已关掉全部过渡与动画；场景引擎自己跳到终态、不发数据包 */
 
 /* ---------- 无脚本兜底 ---------- */
 .noscript { max-width: var(--wrap); margin: 0 auto; padding: var(--sp-6) var(--sp-4); }
