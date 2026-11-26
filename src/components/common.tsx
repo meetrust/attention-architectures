@@ -15,14 +15,19 @@ export function RouteArrow() {
 
 /* ---------- 末尾几个字不拆行：避免单字成行（原则 8） ---------- */
 export function Tail({ children, n = 4 }: { children: string; n?: number }) {
-  const cut = Math.max(0, children.length - n);
+  const text = glue(children);
+  const cut = Math.max(0, text.length - n);
   return (
     <>
-      {children.slice(0, cut)}
-      <span className="nw">{children.slice(cut)}</span>
+      {text.slice(0, cut)}
+      <span className="nw">{text.slice(cut)}</span>
     </>
   );
 }
+
+/** 原则 8：行首不能是“/”或“·”。把前后带空格的分隔符用不换行空格粘在前一个词上，换行只会落在分隔符之后。
+ *  只用于显示；aria-label、复制内容和搜索仍用原文。 */
+export const glue = (s: string) => s.replace(/(\S) ([/·]) /g, "$1\u00a0$2 ");
 
 /** 拼接中英文片段：只在西文 / 数字与汉字相接处补一个空格（原则 8）。 */
 export function cj(...parts: string[]) {

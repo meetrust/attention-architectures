@@ -6,7 +6,7 @@ import {
   FAM, FAMILIES, GROUPS, REF_BY_NO, groupFamilies, groupHaystack, refLabel, stackCounts,
   type FamId, type Group,
 } from "../data";
-import { FamDots, RouteArrow, SectionHead, Tail, UnitBar, cvar, useMedia } from "./common";
+import { FamDots, RouteArrow, SectionHead, Tail, UnitBar, cvar, glue, useMedia } from "./common";
 import { stageFams } from "./Routes";
 
 export const routeText = (g: Group) => g.stages.map((s) => s.route).join(" → ");
@@ -56,7 +56,7 @@ function GroupDetail({ g, inCompare, onToggleCompare, onCopy, onShowStack }: Det
         {g.versions.map((v) => (
           <li className="ver" key={v.id}>
             <div className="ver-head">
-              <h4>{v.name}</h4>
+              <h4>{glue(v.name)}</h4>
               <div className="ver-mech">
                 {v.mech.map((m) => <Chip key={m} c={FAM[m].c}>{FAM[m].name}</Chip>)}
               </div>

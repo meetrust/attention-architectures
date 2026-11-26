@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Chip, TsButton } from "../kumo-ts/adapters";
 import { FAM, GROUPS, groupFamilies } from "../data";
 import { X } from "lucide-react";
-import { FamDots, RouteArrow, Tail } from "./common";
+import { FamDots, RouteArrow, Tail, glue } from "./common";
 import { stageFams } from "./Routes";
 
 export const COMPARE_MAX = 3;
@@ -87,7 +87,7 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
                 <span>ARCHITECTURE</span>
                 {g.versions.map((v) => (
                   <React.Fragment key={v.id}>
-                    <p className="cmp-ver" style={{ margin: 0 }}><b>{v.name}</b><Tail>{v.arch}</Tail></p>
+                    <p className="cmp-ver" style={{ margin: 0 }}><b>{glue(v.name)}</b><Tail>{v.arch}</Tail></p>
                     {v.note ? <p className="t-note" style={{ margin: 0 }}><Tail>{`更正：${v.note}`}</Tail></p> : null}
                   </React.Fragment>
                 ))}

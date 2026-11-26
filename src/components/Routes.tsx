@@ -5,7 +5,7 @@ import {
   FAM, FAMILIES, FAMILY_COUNTS, GROUPS, SWITCHED, VERSION_BY_ID,
   groupFamilies, type FamId, type Group, type Stage,
 } from "../data";
-import { FamDots, RouteArrow, SectionHead, Tail, cj, cvar } from "./common";
+import { FamDots, RouteArrow, SectionHead, Tail, cj, cvar, glue } from "./common";
 
 export function stageFams(g: Group, s: Stage): FamId[] {
   const set = new Set(s.versions.flatMap((id) => g.versions.find((v) => v.id === id)!.mech));
@@ -45,8 +45,8 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
       <div className="route-figs">
         <figure className="fig" aria-labelledby="fig02-cap">
           <figcaption id="fig02-cap">
-            <b>FIG.02 · 技术路线迁移</b>
-            <span>{pin ? `高亮：${FAM[pin].name}` : `${total} 组模型 · 箭头为版本演进`}</span>
+            <b>FIG.02&nbsp;· 技术路线迁移</b>
+            <span>{glue(pin ? `高亮：${FAM[pin].name}` : `${total} 组模型 · 箭头为版本演进`)}</span>
           </figcaption>
           <div className="fig-body">
             <ol className="routes">
@@ -77,7 +77,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
                             >
                               <FamDots fams={sf} />
                               <span className="rt">{s.route}</span>{" "}
-                              <span className="vn">{vn}</span>
+                              <span className="vn">{glue(vn)}</span>
                             </button>
                           </li>
                         );
@@ -93,7 +93,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
               {FAMILY_COUNTS.map(({ fam, groups }) => (
                 <li key={fam.id} style={cvar(fam.id)}>
                   <i aria-hidden="true" />
-                  <span>{fam.name}</span>
+                  <span>{glue(fam.name)}</span>
                   <b>{groups}</b>
                 </li>
               ))}
@@ -103,14 +103,14 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
 
         <figure className="fig" aria-labelledby="fig03-cap">
           <figcaption id="fig03-cap">
-            <b>FIG.03 · 机制出现在多少组里</b>
+            <b>FIG.03&nbsp;· 机制出现在多少组里</b>
             <span><Tail>深色：最新版本仍在使用 · 浅色：任一版本使用过</Tail></span>
           </figcaption>
           <div className="fig-body">
             <ul className="bars duo">
               {FAMILY_COUNTS.map(({ fam, groups, latest }) => (
                 <li key={fam.id} style={cvar(fam.id)}>
-                  <span className="nm"><i className="fam-dot" aria-hidden="true" style={cvar(fam.id)} />{fam.name}</span>
+                  <span className="nm"><i className="fam-dot" aria-hidden="true" style={cvar(fam.id)} />{glue(fam.name)}</span>
                   <span className="tr" role="img" aria-label={`${fam.name}：${groups} 组用过，其中 ${latest} 组的最新版本仍在使用`}>
                     <motion.span className="any" style={{ width: `${(groups / SCALE) * 100}%`, height: "100%" }} initial={{ scaleX: 0.12 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} />
                     <motion.span className="now" style={{ width: `${(latest / SCALE) * 100}%`, height: "100%" }} initial={{ scaleX: 0.12 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} />

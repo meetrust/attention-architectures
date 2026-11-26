@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { TsButton } from "../kumo-ts/adapters";
 import { DATA_DATE, GROUPS, SOURCE_TITLE, VERSIONS } from "../data";
 import { ArrowUp } from "lucide-react";
-import { Tail, scrollToId } from "./common";
+import { Tail, glue, scrollToId } from "./common";
 
 export const SECTIONS = [
   { id: "routes", no: "01", title: "路线", full: "技术路线迁移" },
@@ -98,8 +98,8 @@ export function Palette({ open, setOpen, openGroup }: { open: boolean; setOpen: 
               <CommandPalette.Items>
                 {(i: PItem) => (
                   <CommandPalette.Item key={i.id} value={i} onClick={() => choose(i)}>
-                    <span>{i.title}</span>
-                    <span className="pal-sub">{i.sub}</span>
+                    <span>{glue(i.title)}</span>
+                    <span className="pal-sub">{glue(i.sub)}</span>
                   </CommandPalette.Item>
                 )}
               </CommandPalette.Items>
@@ -145,15 +145,20 @@ export function Footer() {
   return (
     <footer className="foot wrap">
       <p>
-        <Tail>{`数据来源：《${SOURCE_TITLE}》，核对于 ${DATA_DATE}。架构描述、技术路线与参考文献取自原文，其中 MiMo-V2-Flash 的层数已按官方 README 更正；机制分类与层序条码按原文整理，绘制规则写在 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。`}</Tail>
+        {`数据来源：《${SOURCE_TITLE}》，核对于 `}
+        <span className="nw">{DATA_DATE}</span>
+        <Tail>{"。架构描述、技术路线与参考文献取自原文，其中 MiMo-V2-Flash 的层数已按官方 README 更正；机制分类与层序条码按原文整理，绘制规则写在 FIG.04 下方；FIG.01 只是示意，不代表任何模型的真实参数。"}</Tail>
       </p>
       <p>
         与
         <a href="https://meetrust.github.io/llm-visual-guide/" target="_blank" rel="noopener">《大模型可视化学习指南》</a>
         、
         <a href="https://meetrust.github.io/stanford-ai-courses/" target="_blank" rel="noopener">《斯坦福 AI 课程地图》</a>
-        同一设计系列 · Tight Surface 白昼主题 · 源码见{" "}
-        <a href="https://github.com/meetrust/attention-architectures" target="_blank" rel="noopener">GitHub</a>
+        {/* 各段不拆行，分隔符粘在前一段上：换行只落在“· ”之后（原则 8） */}
+        <span className="nw">同一设计系列</span>&nbsp;· <span className="nw">Tight Surface 白昼主题</span>&nbsp;·{" "}
+        <span className="nw">
+          源码见 <a href="https://github.com/meetrust/attention-architectures" target="_blank" rel="noopener">GitHub</a>
+        </span>
       </p>
     </footer>
   );

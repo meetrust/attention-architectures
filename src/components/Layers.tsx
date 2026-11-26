@@ -2,7 +2,7 @@ import * as React from "react";
 import { Tabs } from "@cloudflare/kumo";
 import { motion } from "motion/react";
 import { FAM, MAX_DEPTH, STACKED, stackCounts, type FamId } from "../data";
-import { SectionHead, Tail, cvar } from "./common";
+import { SectionHead, Tail, cvar, glue } from "./common";
 
 type Mode = "abs" | "fit";
 type Cur = { id: string; i: number } | null;
@@ -58,8 +58,8 @@ function StackRow({ v, mode, cur, setCur, focused }: {
   return (
     <motion.div className="ls-row" id={`ls-${v.id}`} data-focus={focused || undefined} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
       <div className="ls-label">
-        <b>{v.name}</b>
-        <span>{n} 层 · {v.group.org}</span>
+        <b>{glue(v.name)}</b>
+        <span>{n} 层&nbsp;· {v.group.org}</span>
       </div>
       <div className="ls-track">
         <motion.div initial={false} animate={{ width: `${pct}%` }}>
@@ -129,7 +129,7 @@ export function Layers({ focus }: { focus: string | null }) {
       </p>
       <figure className="fig" aria-labelledby="fig04-cap">
         <figcaption id="fig04-cap">
-          <b>FIG.04 · 层序条码</b>
+          <b>FIG.04&nbsp;· 层序条码</b>
           <span>{mode === "abs" ? "按层号对齐：条码越长，层数越多" : "按比例拉伸：只比较交错比例"}</span>
         </figcaption>
         <div className="fig-body">
@@ -144,7 +144,7 @@ export function Layers({ focus }: { focus: string | null }) {
               {LEGEND.map((e) => (
                 <li key={e.fam} style={cvar(e.fam)}>
                   <i aria-hidden="true" />
-                  <span>{FAM[e.fam].short} · {[...e.labels].join(" / ")}</span>
+                  <span>{glue(`${FAM[e.fam].short} · ${[...e.labels].join(" / ")}`)}</span>
                 </li>
               ))}
             </ul>
@@ -157,8 +157,8 @@ export function Layers({ focus }: { focus: string | null }) {
           <p className="ls-read" aria-hidden="true">
             {active && ak ? (
               <>
-                <span><b>{active.name}</b> · 第 <b>{cur!.i}</b> / {active.stack!.seq.length} 层</span>
-                <span className="lvl" style={cvar(ak.fam)}>{ak.label} · {FAM[ak.fam].name}</span>
+                <span><b>{glue(active.name)}</b>&nbsp;· 第 <b>{cur!.i}</b>&nbsp;/ {active.stack!.seq.length} 层</span>
+                <span className="lvl" style={cvar(ak.fam)}>{glue(`${ak.label} · ${FAM[ak.fam].name}`)}</span>
                 <span>到这一层为止：{active.stack!.kinds.map((k, i) => `${before[i]} ${k.label}`).join("、")}</span>
               </>
             ) : (

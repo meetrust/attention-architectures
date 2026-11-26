@@ -68,8 +68,8 @@ function MaskFigure() {
   return (
     <figure className="fig" aria-labelledby="fig01-cap">
       <figcaption id="fig01-cap">
-        <b>FIG.01 · 注意力读取范围</b>
-        <span>示意 · 拖动 t 或点选网格中的一行</span>
+        <b>FIG.01&nbsp;· 注意力读取范围</b>
+        <span>示意&nbsp;· 拖动 t 或点选网格中的一行</span>
       </figcaption>
       <div className="fig-body">
         <div className="mask-ctrl">

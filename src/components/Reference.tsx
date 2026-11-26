@@ -2,7 +2,7 @@ import * as React from "react";
 import { Table } from "@cloudflare/kumo";
 import { GROUPS, REFS, VERSIONS, refLabel } from "../data";
 import { ArrowUpRight } from "lucide-react";
-import { SectionHead, Tail } from "./common";
+import { SectionHead, Tail, glue } from "./common";
 
 /* ---------- 04 原表对照 ---------- */
 export function SourceTable() {
@@ -14,7 +14,7 @@ export function SourceTable() {
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.Head>厂商 / 模型</Table.Head>
+              <Table.Head>厂商&nbsp;/ 模型</Table.Head>
               <Table.Head>Attention 架构</Table.Head>
               <Table.Head>技术路线</Table.Head>
               <Table.Head>参考文献</Table.Head>
@@ -32,7 +32,7 @@ export function SourceTable() {
                   <Table.Cell>
                     {g.versions.map((v) => (
                       <React.Fragment key={v.id}>
-                        <span className="t-arch"><b>{v.name}：</b><Tail>{v.arch}</Tail></span>
+                        <span className="t-arch"><b>{glue(v.name)}：</b><Tail>{v.arch}</Tail></span>
                         {v.note ? <span className="t-note"><Tail>{`更正：${v.note}`}</Tail></span> : null}
                       </React.Fragment>
                     ))}
@@ -71,10 +71,10 @@ export function Sources() {
               <span className="rno">{refLabel(r.no)}</span>
               <div>
                 <a href={r.url} target="_blank" rel="noopener">
-                  <span className="tx">{r.title}｜{r.kind}</span>
+                  <span className="tx">{glue(`${r.title}｜${r.kind}`)}</span>
                   <ArrowUpRight />
                 </a>
-                <small>{r.src} · 对应 {used.join(" · ")}</small>
+                <small>{glue(`${r.src} · 对应 ${used.join(" · ")}`)}</small>
               </div>
             </li>
           );
