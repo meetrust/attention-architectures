@@ -67,6 +67,7 @@ npm ci
 npm run dev        # 开发预览 · dev server at http://localhost:5173/
 npm run build      # 构建到 dist/ · build into dist/
 npm run check      # 数据自检 · check layer counts and references
+npm run lint       # 规范检查 · Kumo and icon rules
 ```
 
 ## 项目结构 · Structure
@@ -75,7 +76,7 @@ npm run check      # 数据自检 · check layer counts and references
 src/data.ts                  唯一数据源 · single source of the page data
 src/components/              页面各节 · page sections
 src/tight-surface/           Tight Surface 设计 token 与组件样式 · design tokens and component styles
-src/kumo-ts/                 Kumo 适配层 · Kumo adapter for Tight Surface
+src/kumo-ts/                 Kumo 适配层与 ESLint 规则 · Kumo adapter and lint rules
 scripts/check-data.mjs       数据自检 · data self-check
 scripts/readme-tables.mjs    生成本文件的表格 · generates the tables in this README
 scripts/inline-artifact.mjs  生成单文件版本 · builds the single-file version

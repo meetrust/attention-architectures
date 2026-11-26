@@ -1,24 +1,14 @@
 import * as React from "react";
 import { FAM, type FamId, type Unit } from "../data";
 
-/* ---------- Icon：Tight Surface 的 SVG sprite（16×16，1.7–1.8px 圆头描边） ---------- */
-export function Sprite() {
+/* ---------- 图标：Tight Surface 默认图标库 Lucide 1.71.0 ----------
+   一般图标直接用 lucide-react（main.tsx 的 <LucideProvider className="i"> 统一套上 .i，尺寸由 CSS 决定）。
+   路线里的箭头是 Tight Surface 的连线图例 i-move-right：lucide-react 没有对应组件（viewBox 裁成 24×16），
+   symbol 放在 index.html 的内联 sprite 里，这里只负责引用。 */
+export function RouteArrow() {
   return (
-    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
-      <symbol id="i-ext" viewBox="0 0 16 16"><path d="M4.8 11.2 11 5M6.2 5H11v4.8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></symbol>
-      <symbol id="i-up" viewBox="0 0 16 16"><path d="M8 13V3.6M3.8 7.6 8 3.4l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></symbol>
-      <symbol id="i-to" viewBox="0 0 24 16"><path d="M2 8h17.5M15.5 3.8 19.7 8l-4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></symbol>
-      <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.2 8.4 6.6 11.6 12.8 4.6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></symbol>
-      <symbol id="i-cross" viewBox="0 0 16 16"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></symbol>
-    </svg>
-  );
-}
-
-export type IconName = "ext" | "up" | "to" | "check" | "cross";
-export function Icon({ name, className }: { name: IconName; className?: string }) {
-  return (
-    <svg className={"i" + (className ? " " + className : "")} aria-hidden="true" focusable="false">
-      <use href={`#i-${name}`} />
+    <svg className="i rr-arrow" aria-hidden="true" focusable="false">
+      <use href="#i-move-right" />
     </svg>
   );
 }

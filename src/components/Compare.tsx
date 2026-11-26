@@ -3,7 +3,8 @@ import { Dialog } from "@cloudflare/kumo";
 import { AnimatePresence, motion } from "motion/react";
 import { Chip, TsButton } from "../kumo-ts/adapters";
 import { FAM, GROUPS, groupFamilies } from "../data";
-import { FamDots, Icon, Tail } from "./common";
+import { X } from "lucide-react";
+import { FamDots, RouteArrow, Tail } from "./common";
 import { stageFams } from "./Routes";
 
 export const COMPARE_MAX = 3;
@@ -32,7 +33,7 @@ export function CompareTray({ ids, onRemove, onClear, onOpen }: {
               <li key={g.id}>
                 <button type="button" className="tray-chip" onClick={() => onRemove(g.id)} aria-label={`${g.no} ${g.title}：移出对比`}>
                   <span className="tx">{g.no} {g.title}</span>
-                  <span className="tray-x" aria-hidden="true"><Icon name="cross" /></span>
+                  <span className="tray-x" aria-hidden="true"><X /></span>
                 </button>
               </li>
             ))}
@@ -70,7 +71,7 @@ export function CompareDialog({ ids, open, setOpen }: { ids: string[]; open: boo
                 <div className="cmp-chips">
                   {g.stages.map((s, i) => (
                     <span key={s.route + i} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      {i > 0 ? <Icon name="to" className="rr-arrow" /> : null}
+                      {i > 0 ? <RouteArrow /> : null}
                       <span className="route-pill"><FamDots fams={stageFams(g, s)} />{s.route}</span>
                     </span>
                   ))}

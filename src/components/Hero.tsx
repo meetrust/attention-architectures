@@ -122,7 +122,10 @@ function MaskFigure() {
         </div>
       </div>
       <div className="fig-foot">
-        <Tail>{`示意：${N} 个 token，窗口 w = ${W}，Top-k 取 ${K}（含自身）。真实模型的窗口与 k 大得多，例如 MiMo-V2-Flash 的窗口为 128。`}</Tail>
+        {/* 包一层 span：.fig-foot 是 flex 容器，否则 Tail 末尾不拆行的几个字会被当成单独一项换到下一行 */}
+        <span>
+          <Tail>{`示意：${N} 个 token，窗口 w = ${W}，Top-k 取 ${K}（含自身）。真实模型的窗口与 k 大得多，例如 MiMo-V2-Flash 的窗口为 128。`}</Tail>
+        </span>
       </div>
     </figure>
   );

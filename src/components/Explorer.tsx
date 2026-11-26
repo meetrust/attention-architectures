@@ -6,7 +6,7 @@ import {
   FAM, FAMILIES, GROUPS, REF_BY_NO, groupFamilies, groupHaystack, refLabel, stackCounts,
   type FamId, type Group,
 } from "../data";
-import { FamDots, Icon, SectionHead, Tail, UnitBar, cvar, useMedia } from "./common";
+import { FamDots, RouteArrow, SectionHead, Tail, UnitBar, cvar, useMedia } from "./common";
 import { stageFams } from "./Routes";
 
 export const routeText = (g: Group) => g.stages.map((s) => s.route).join(" → ");
@@ -46,7 +46,7 @@ function GroupDetail({ g, inCompare, onToggleCompare, onCopy, onShowStack }: Det
         <ol className="exd-route" aria-label="技术路线">
           {g.stages.map((s, i) => (
             <li key={s.route + i}>
-              {i > 0 ? <Icon name="to" className="rr-arrow" /> : null}
+              {i > 0 ? <RouteArrow /> : null}
               <span className="route-pill"><FamDots fams={stageFams(g, s)} />{s.route}</span>
             </li>
           ))}
@@ -127,12 +127,12 @@ export function Explorer({ sel, setSel, compare, onToggleCompare, onCopy, onShow
     const g = GROUPS.find((x) => x.id === sel);
     const hidden = g && ((needle && !groupHaystack(g).includes(needle)) || (fam !== "all" && !groupFamilies(g).includes(fam as FamId)));
     if (hidden) { setQ(""); setFam("all"); }
-  }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sel]); // 有意只跟随 sel：用户之后改搜索或筛选时不再触发
 
   // 宽屏：当前项被筛掉时，详情跟到列表第一项
   React.useEffect(() => {
     if (!narrow && list.length && !visible) setSel(list[0].id);
-  }, [narrow, needle, fam]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [narrow, needle, fam]); // 有意不跟随 sel 与 list：只在宽窄屏或筛选条件变化时校正
 
   const detail = (g: Group) => (
     <GroupDetail g={g} inCompare={compare.includes(g.id)} onToggleCompare={onToggleCompare} onCopy={onCopy} onShowStack={onShowStack} />

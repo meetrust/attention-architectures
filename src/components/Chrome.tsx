@@ -3,7 +3,8 @@ import { CommandPalette, Dialog } from "@cloudflare/kumo";
 import { AnimatePresence, motion } from "motion/react";
 import { TsButton } from "../kumo-ts/adapters";
 import { DATA_DATE, GROUPS, SOURCE_TITLE, VERSIONS } from "../data";
-import { Icon, Tail, scrollToId } from "./common";
+import { ArrowUp } from "lucide-react";
+import { Tail, scrollToId } from "./common";
 
 export const SECTIONS = [
   { id: "routes", no: "01", title: "路线", full: "技术路线迁移" },
@@ -33,9 +34,11 @@ export function Nav({ onPalette }: { onPalette: () => void }) {
   return (
     <header className="nav">
       <div className="nav-in">
-        <a className="brand" href="#top" aria-label="Attention Architectures：回到顶部">
-          <span className="brand-mark">ATTENTION ARCHITECTURES</span>
+        {/* 可访问名称取自可见文字再加“回到顶部”（原则 5：名称包含可见文字） */}
+        <a className="brand" href="#top">
+          <span className="brand-mark">ATTENTION ARCHITECTURES</span>{" "}
           <span className="brand-name">Attention 架构对照</span>
+          <span className="sr-only">：回到顶部</span>
         </a>
         <nav aria-label="页内导航" className="nav-links">
           <ol>
@@ -130,7 +133,7 @@ export function BackToTop() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
         >
-          <Icon name="up" />
+          <ArrowUp />
         </motion.button>
       ) : null}
     </AnimatePresence>

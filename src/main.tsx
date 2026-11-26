@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import { LucideProvider } from "lucide-react";
 import "./app.css";
 
 // 字体样式表单独成块，与脚本并行加载；加载前先用 PingFang SC 等系统字体。
@@ -14,6 +15,9 @@ applyTheme("day", document.body);
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    {/* Tight Surface：图标统一用 lucide-react，每个图标带上 .i，尺寸与描边由 CSS 决定 */}
+    <LucideProvider className="i">
+      <App />
+    </LucideProvider>
   </React.StrictMode>,
 );

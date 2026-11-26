@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Table } from "@cloudflare/kumo";
 import { GROUPS, REFS, VERSIONS, refLabel } from "../data";
-import { Icon, SectionHead, Tail } from "./common";
+import { ArrowUpRight } from "lucide-react";
+import { SectionHead, Tail } from "./common";
 
 /* ---------- 04 原表对照 ---------- */
 export function SourceTable() {
@@ -71,7 +72,7 @@ export function Sources() {
               <div>
                 <a href={r.url} target="_blank" rel="noopener">
                   <span className="tx">{r.title}｜{r.kind}</span>
-                  <Icon name="ext" />
+                  <ArrowUpRight />
                 </a>
                 <small>{r.src} · 对应 {used.join(" · ")}</small>
               </div>

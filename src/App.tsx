@@ -2,7 +2,7 @@ import * as React from "react";
 import { Toasty, useKumoToastManager } from "@cloudflare/kumo";
 import { MotionConfig, useReducedMotion } from "motion/react";
 import { GROUPS, VERSION_BY_ID, type Group } from "./data";
-import { Sprite, copyText, scrollToId } from "./components/common";
+import { copyText, scrollToId } from "./components/common";
 import { Hero } from "./components/Hero";
 import { Routes } from "./components/Routes";
 import { Explorer, groupExcerpt } from "./components/Explorer";
@@ -68,7 +68,6 @@ function Shell() {
 
   return (
     <div className="app ts-dot-bg isolate" data-tray={compare.length ? "on" : undefined}>
-      <Sprite />
       <a className="skip" href="#routes">跳到正文</a>
       <Nav onPalette={() => setPalOpen(true)} />
       <main>

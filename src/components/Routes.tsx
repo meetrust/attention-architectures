@@ -5,7 +5,7 @@ import {
   FAM, FAMILIES, FAMILY_COUNTS, GROUPS, SWITCHED, VERSION_BY_ID,
   groupFamilies, type FamId, type Group, type Stage,
 } from "../data";
-import { FamDots, Icon, SectionHead, Tail, cj, cvar } from "./common";
+import { FamDots, RouteArrow, SectionHead, Tail, cj, cvar } from "./common";
 
 export function stageFams(g: Group, s: Stage): FamId[] {
   const set = new Set(s.versions.flatMap((id) => g.versions.find((v) => v.id === id)!.mech));
@@ -66,7 +66,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
                         const vn = stageVersions(s);
                         return (
                           <li key={s.route + i}>
-                            {i > 0 ? <Icon name="to" className="rr-arrow" /> : null}
+                            {i > 0 ? <RouteArrow /> : null}
                             <button
                               type="button"
                               className="stage"
@@ -76,7 +76,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
                               aria-label={`${s.route} ${vn}：在架构图鉴中查看`}
                             >
                               <FamDots fams={sf} />
-                              <span className="rt">{s.route}</span>
+                              <span className="rt">{s.route}</span>{" "}
                               <span className="vn">{vn}</span>
                             </button>
                           </li>

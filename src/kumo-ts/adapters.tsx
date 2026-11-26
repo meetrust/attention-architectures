@@ -2,7 +2,7 @@
  * adapters.tsx · Kumo × Tight Surface 薄适配组件
  * 只做两件事：把 TS 语义映射到 Kumo 的公开 props，再打上 data-ts-variant，
  * 视觉全部由 kumo-tight-surface.css 决定。不复制、不改写 Kumo 源码。
- * Source: Design System「Tight Surface」project/kumo/adapters.tsx (2026-11-16).
+ * Source: Design System「Tight Surface」project/kumo/adapters.tsx (v2.5.1, 2026-11-25).
  */
 import * as React from "react";
 import { Badge, Button, LinkButton } from "@cloudflare/kumo";
@@ -21,7 +21,7 @@ export function TsButton({
   const variant =
     tone === "primary" ? "primary" : tone === "danger" ? "destructive" : tone === "ghost" ? "ghost" : "secondary";
   const ts = tone === "primary" ? "primary" : tone === "danger" ? "danger" : undefined;
-  return <Button {...(props as KumoButtonProps)} variant={variant} size={size} data-ts-variant={ts} />;
+  return <Button {...(props as KumoButtonProps)} variant={variant} size={size} data-ts-variant={ts} data-ts-size={size} />;
 }
 
 /** 筛选按钮 = TS .fbtn：36px 胶囊，aria-pressed 表示选中。 */

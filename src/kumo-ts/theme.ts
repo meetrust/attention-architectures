@@ -2,7 +2,7 @@
  * theme.ts · 同时维护 Tight Surface 的 data-theme 与 Kumo 的 data-mode。
  * Night 是默认值：<html data-mode="dark">；Day：<html data-theme="day" data-mode="light">。
  * 只改属性，不改任何尺寸（TS QA 第 2、3 组要求切主题后布局不变）。
- * Source: Design System「Tight Surface」project/kumo/theme.ts (2026-11-16).
+ * Source: Design System「Tight Surface」project/kumo/theme.ts (v2.5.1, 2026-11-25).
  */
 export type TsTheme = "night" | "day";
 
