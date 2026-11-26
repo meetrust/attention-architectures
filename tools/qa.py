@@ -357,6 +357,30 @@ async def interactions(b):
     await pg.screenshot(path=str(OUT / "touch-390.png"))
     await ctx.close()
 
+# 场景舞台（FIG.01 / FIG.02 / FIG.04）：标签 >= 12px、不出画面、互不重叠；形状不出画面
+FLOW_JS = r"""() => {
+  const stages = [...document.querySelectorAll('.scene-stage')]; if (!stages.length) return ['no .scene-stage'];
+  const out = [];
+  for (const st of stages) {
+    const tag = st.closest('figure')?.querySelector('figcaption b')?.textContent?.slice(0, 6) || 'stage';
+    const sb = st.getBoundingClientRect();
+    const ls = [...st.querySelectorAll('.lbl')].filter((l) => +getComputedStyle(l).opacity > 0.5).map((l) => [l.textContent, l.getBoundingClientRect(), parseFloat(getComputedStyle(l).fontSize)]);
+    for (const [t, r, fs] of ls) {
+      if (fs < 12) out.push(`${tag} ${t} font ${fs}px`);
+      if (r.left < sb.left - 1 || r.right > sb.right + 1 || r.top < sb.top - 1 || r.bottom > sb.bottom + 1) out.push(`${tag} ${t} outside the stage`);
+    }
+    for (let i = 0; i < ls.length; i++) for (let j = i + 1; j < ls.length; j++) {
+      const a = ls[i][1], b = ls[j][1];
+      if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push(`${tag} ${ls[i][0]} overlaps ${ls[j][0]}`);
+    }
+    for (const r of st.querySelectorAll('svg rect')) {
+      const b = r.getBoundingClientRect();
+      if (b.width && (b.left < sb.left - 1 || b.right > sb.right + 1 || b.top < sb.top - 1 || b.bottom > sb.bottom + 1)) out.push(`${tag} shape outside the stage`);
+    }
+  }
+  return out;
+}"""
+
 async def states(b):
     """Every reachable view, not just the default one: all 11 explorer details, all FIG.01 modes and
     query positions, every mechanism pin, the proportional barcode mode, the compare dialog, and the
@@ -379,11 +403,54 @@ async def states(b):
             if await item.get_attribute("aria-current") != "true": await click(item)
             await pg.wait_for_timeout(450)
             report(f"{w}px explorer {gid}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
-        for mode in ["全局", "窗口", "稀疏", "线性"]:
-            await click(pg.get_by_role("tab", name=mode)); await pg.wait_for_timeout(200)
-            for t in [1, 4, 5, 16]:
-                await pg.evaluate(f"(() => {{ const r = document.querySelectorAll('.mask-grid i')[{(t - 1) * 16}]; r.click(); }})()"); await pg.wait_for_timeout(120)
-                report(f"{w}px FIG.01 {mode} t={t}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        # FIG.01 两种视图：流动（默认，点 token）与掩码（点网格行）
+        for view in ["流动", "掩码"]:
+            await click(pg.get_by_role("tab", name=view)); await pg.wait_for_timeout(300)
+            for mode in ["全局", "窗口", "稀疏", "线性"]:
+                await click(pg.get_by_role("tab", name=mode)); await pg.wait_for_timeout(200)
+                for t in [1, 2, 4, 5, 15, 16]:
+                    if view == "掩码":
+                        await pg.evaluate(f"(() => {{ const r = document.querySelectorAll('.mask-grid i')[{(t - 1) * 16}]; r.click(); }})()"); await pg.wait_for_timeout(120)
+                    else:
+                        await pg.evaluate(f"document.querySelector(\".flow-stage rect[data-pick='{t}']\").dispatchEvent(new MouseEvent('click', {{ bubbles: true }}))")
+                        await pg.wait_for_timeout(1400)
+                        for x in await pg.evaluate(FLOW_JS): fail("flow labels", f"{w}px {mode} t={t}: {x}")
+                    report(f"{w}px FIG.01 {view} {mode} t={t}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        # FIG.02 路线回放：每一组、每一个版本
+        names = await pg.evaluate("[...document.querySelectorAll('.rp-sel select option')].map((o) => o.textContent)")
+        combo = pg.get_by_role("combobox", name="回放")
+        groups = names or []
+        if not groups:
+            await click(combo); await pg.wait_for_timeout(300)
+            groups = [await o.inner_text() for o in await pg.get_by_role("option").all()]
+            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
+        for gname in groups:
+            await click(combo); await pg.wait_for_timeout(250)
+            await click(pg.get_by_role("option", name=gname, exact=True)); await pg.wait_for_timeout(400)
+            vers = pg.locator(".rp-ver")
+            for i in range(await vers.count()):
+                await click(vers.nth(i)); await pg.wait_for_timeout(1300)
+                cur = await vers.nth(i).get_attribute("aria-current")
+                if cur != "step": fail("replay", f"{w}px {gname} v{i + 1}: aria-current {cur}")
+                for x in await pg.evaluate(FLOW_JS): fail("scene labels", f"{w}px replay {gname} v{i + 1}: {x}")
+                report(f"{w}px FIG.02 replay {gname} v{i + 1}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        # FIG.04 逐层读取：每个版本的首层、末层，以及播放 2.5 秒后
+        for v in ["kimi-k3", "glm-5.3-flash", "step-3.5-flash", "mimo-v2-flash"]:
+            for key in ["Home", "End"]:
+                await pg.evaluate(f"document.getElementById('ls-{v}').querySelector('.ls-bar').focus()"); await pg.keyboard.press(key); await pg.wait_for_timeout(1300)
+                for x in await pg.evaluate(FLOW_JS): fail("scene labels", f"{w}px FIG.04 {v} {key}: {x}")
+                report(f"{w}px FIG.04 read {v} {key}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
+        await pg.evaluate("document.getElementById('ls-kimi-k3').querySelector('.ls-bar').focus()"); await pg.keyboard.press("Home"); await pg.wait_for_timeout(300)
+        await click(pg.get_by_role("button", name="逐层播放 Kimi K3")); await pg.wait_for_timeout(2500)
+        layer = await pg.evaluate("document.getElementById('ls-kimi-k3').querySelector('.ls-bar').getAttribute('aria-valuenow')")
+        print(f"  {w}px FIG.04 playing 2.5 s -> layer {layer}")
+        if not layer or int(layer) < 3: fail("playback", f"{w}px FIG.04 playback did not advance ({layer})")
+        await click(pg.get_by_role("button", name="暂停播放")); await pg.wait_for_timeout(1200)
+        layer2 = await pg.evaluate("document.getElementById('ls-kimi-k3').querySelector('.ls-bar').getAttribute('aria-valuenow')")
+        await pg.wait_for_timeout(1000)
+        layer3 = await pg.evaluate("document.getElementById('ls-kimi-k3').querySelector('.ls-bar').getAttribute('aria-valuenow')")
+        if layer2 != layer3: fail("playback", f"{w}px FIG.04 pause did not stop ({layer2} -> {layer3})")
+        report(f"{w}px FIG.04 paused", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
         for fam in ["线性", "窗口", "稀疏", "全局", "复用", "压缩", "SSM"]:
             btn = pg.locator("[data-ts-variant=filter]", has_text=fam); await click(btn); await pg.wait_for_timeout(300)
             report(f"{w}px pin {fam}", await pg.evaluate(TEXT_JS), await pg.evaluate(LAYOUT_JS)); n += 1
@@ -416,6 +483,15 @@ async def modes(b):
     sb = await pg.evaluate("getComputedStyle(document.documentElement).scrollBehavior")
     print("  reduced motion: h1 opacity after 300ms", op, "scroll-behavior", sb)
     if float(op) < 0.99 or sb != "auto": fail("motion", "reduced motion still animates")
+    await pg.get_by_role("tab", name="稀疏").click(); await pg.wait_for_timeout(100)
+    for name in ["稀疏"]:
+        await pg.get_by_role("tab", name=name).click()
+    await pg.locator(".rp-ver").nth(1).click()
+    await pg.evaluate("document.getElementById('ls-glm-5.3-flash').querySelector('.ls-bar').focus()"); await pg.keyboard.press("End")
+    await pg.wait_for_timeout(150)
+    fl = await pg.evaluate("({stages: document.querySelectorAll('.scene-stage').length, pkts: document.querySelectorAll('.scene-stage .pkt').length, links: [...document.querySelectorAll('.scene-stage .lk')].map((l) => +l.getAttribute('opacity')), dash: [...document.querySelectorAll('.scene-stage .lk')].some((l) => l.style.strokeDashoffset)})")
+    print("  reduced motion, scene stages", fl["stages"], ": packets", fl["pkts"], "link opacity", sorted(set(fl["links"])), "mid-draw", fl["dash"])
+    if fl["stages"] < 3 or fl["pkts"] or fl["dash"] or any(o < 1 for o in fl["links"]): fail("motion", "a scene stage animates under reduced motion")
     await ctx.close()
     # claude.ai writes its own data-theme ("dark" / "light") on <html>: the page must stay in the Day theme
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}); pg = await ctx.new_page()

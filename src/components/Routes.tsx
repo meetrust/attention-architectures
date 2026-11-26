@@ -6,6 +6,7 @@ import {
   groupFamilies, type FamId, type Group, type Stage,
 } from "../data";
 import { FamDots, RouteArrow, SectionHead, Tail, cj, cvar, glue } from "./common";
+import { RouteReplay } from "./RouteReplay";
 
 export function stageFams(g: Group, s: Stage): FamId[] {
   const set = new Set(s.versions.flatMap((id) => g.versions.find((v) => v.id === id)!.mech));
@@ -26,7 +27,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
     <section className="sec wrap" id="routes" aria-labelledby="routes-h">
       <SectionHead idx="01" title="技术路线迁移" meta="Routes" id="routes-h" />
       <p className="sec-lead">
-        <Tail>每一行是一组模型，箭头表示版本演进，圆点是这一段用到的机制。点选一类机制，相关的组保持清晰、其余变淡，再点一次取消；点击任一段路线可以跳到架构图鉴。</Tail>
+        <Tail>图的上方是回放：选一组模型，逐个版本看机制怎么增减。下方每一行是一组模型，箭头表示版本演进，圆点是这一段用到的机制。点选一类机制，相关的组保持清晰、其余变淡，再点一次取消；点击任一段路线可以跳到架构图鉴。</Tail>
       </p>
 
       <div className="fam-filter" role="group" aria-label="按机制高亮">
@@ -49,6 +50,7 @@ export function Routes({ onOpen }: { onOpen: (groupId: string) => void }) {
             <span>{glue(pin ? `高亮：${FAM[pin].name}` : `${total} 组模型 · 箭头为版本演进`)}</span>
           </figcaption>
           <div className="fig-body">
+            <RouteReplay />
             <ol className="routes">
               {GROUPS.map((g) => {
                 const hit = !pin || groupFamilies(g).includes(pin);

@@ -4,13 +4,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { Chip } from "../kumo-ts/adapters";
 import { FAM, FAMILIES, GROUPS, MODEL_COUNT, REFS, type FamId } from "../data";
 import { Tail, cvar } from "./common";
+import { FlowStage } from "./FlowStage";
+import { K, N, W, readSet, type Mode } from "../scene/attention";
 
 /* ---------- FIG.01 注意力读取范围（示意） ---------- */
-const N = 16; // token 数
-const W = 4; // 窗口
-const K = 4; // Top-k（含自身）
-
-type Mode = "full" | "swa" | "sparse" | "linear";
+// 示意模型（N、W、K、readSet）放在 scene/attention.ts，掩码网格与流动视图共用
 const MODES: { id: Mode; fam: FamId; label: string }[] = [
   { id: "full", fam: "full", label: "全局" },
   { id: "swa", fam: "swa", label: "窗口" },
@@ -18,21 +16,11 @@ const MODES: { id: Mode; fam: FamId; label: string }[] = [
   { id: "linear", fam: "linear", label: "线性" },
 ];
 
-/** 示意用的确定性“索引器分数”：同一个 t 每次挑出的位置都一样。 */
-const score = (t: number, j: number) => (j * 37 + t * 11 + j * j * 5) % 29;
-
-function readSet(mode: Mode, t: number): Set<number> {
-  const all = Array.from({ length: t }, (_, i) => i + 1);
-  if (mode === "full") return new Set(all);
-  if (mode === "swa") return new Set(all.filter((j) => j > t - W));
-  if (mode === "linear") return new Set([t]);
-  if (t <= K) return new Set(all);
-  const picked = all
-    .slice(0, -1)
-    .sort((a, b) => score(t, b) - score(t, a) || b - a)
-    .slice(0, K - 1);
-  return new Set([...picked, t]);
-}
+type View = "flow" | "grid";
+const VIEWS: { value: View; label: string }[] = [
+  { value: "flow", label: "流动" },
+  { value: "grid", label: "掩码" },
+];
 
 function cellState(mode: Mode, r: number, c: number, t: number, cur: Set<number>) {
   if (c > r) return "future";
@@ -47,6 +35,7 @@ function cellState(mode: Mode, r: number, c: number, t: number, cur: Set<number>
 function MaskFigure() {
   const [mode, setMode] = React.useState<Mode>("swa");
   const [t, setT] = React.useState(12);
+  const [view, setView] = React.useState<View>("flow");
   const fam = MODES.find((m) => m.id === mode)!.fam;
   const cur = React.useMemo(() => readSet(mode, t), [mode, t]);
   const n = { full: t, swa: Math.min(t, W), sparse: Math.min(t, K) };
@@ -64,12 +53,14 @@ function MaskFigure() {
       : <>第 1 个 token 还没有历史，状态为空，<span className="nw">只读取自身。</span></>,
   };
   const ariaGrid = `${N} × ${N} 注意力掩码示意，当前方式：${FAM[fam].name}，查询位置 t = ${t}。`;
+  const ariaFlow = `${N} 个 token 的读取流向示意，当前方式：${FAM[fam].name}，查询位置 t = ${t}，` +
+    (mode !== "linear" ? `读取 ${cur.size} 个位置（含自身）。` : t > 1 ? "读取 1 份固定大小的状态和自身。" : "只读取自身。");
 
   return (
     <figure className="fig" aria-labelledby="fig01-cap">
       <figcaption id="fig01-cap">
         <b>FIG.01&nbsp;· 注意力读取范围</b>
-        <span>示意&nbsp;· 拖动 t 或点选网格中的一行</span>
+        <span>{view === "flow" ? "示意\u00a0· 拖动 t 或点选一个 token" : "示意\u00a0· 拖动 t 或点选网格中的一行"}</span>
       </figcaption>
       <div className="fig-body">
         <div className="mask-ctrl">
@@ -79,11 +70,21 @@ function MaskFigure() {
             onValueChange={(v) => setMode(v as Mode)}
             tabs={MODES.map((m) => ({ value: m.id, label: m.label }))}
           />
+          <Tabs
+            variant="segmented"
+            className="mask-view"
+            value={view}
+            onValueChange={(v) => setView(v as View)}
+            tabs={VIEWS}
+          />
           <div className="mask-t">
             <Slider label={`查询位置 t = ${t}`} min={1} max={N} step={1} value={t} onValueChange={(v) => setT(Array.isArray(v) ? v[0] : (v as number))} className="w-full" />
           </div>
         </div>
-        <div className="mask-wrap">
+        <div className="mask-wrap" data-view={view}>
+          {view === "flow" ? (
+            <FlowStage mode={mode} t={t} fam={fam} label={ariaFlow} onPick={setT} />
+          ) : (
           <div className="mask-axes">
             <span className="ax-x" aria-hidden="true">KEY 位置 j</span>
             <span className="ax-y" aria-hidden="true">QUERY t</span>
@@ -103,6 +104,7 @@ function MaskFigure() {
               })}
             </div>
           </div>
+          )}
           <div className="mask-read">
             <p className="mask-say" aria-live="polite">{say[mode]}</p>
             <ul className="bars mask-bars" aria-label={`t = ${t} 时各方式读取的历史位置数`}>

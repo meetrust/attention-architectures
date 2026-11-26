@@ -49,10 +49,10 @@ The page turns the same table into three views: a route map for the direction of
 
 ## 页面内容 · Contents
 
-- **00 首屏**：三类主路线、关键数字，以及 FIG.01 注意力读取范围示意。<br><sub>Hero: the three main routes, key numbers and FIG.01, a schematic of what each token reads.</sub>
-- **01 技术路线迁移**：11 组模型的版本演进，可按机制高亮；FIG.02 路线迁移、FIG.03 机制出现次数。<br><sub>Routes: how each family's route changed, highlighted by mechanism; FIG.02 route map and FIG.03 mechanism counts.</sub>
+- **00 首屏**：三类主路线、关键数字，以及 FIG.01 注意力读取范围示意，可在流动和掩码两种视图间切换。<br><sub>Hero: the three main routes, key numbers and FIG.01, a schematic of what each token reads, shown as animated flows or as a mask grid.</sub>
+- **01 技术路线迁移**：11 组模型的版本演进，可按机制高亮；FIG.02 路线迁移（可选一组模型逐个版本回放机制的增减）、FIG.03 机制出现次数。<br><sub>Routes: how each family's route changed, highlighted by mechanism; FIG.02 route map, with a replay that steps through one family's versions and animates the mechanisms added and dropped, and FIG.03 mechanism counts.</sub>
 - **02 架构图鉴**：搜索、筛选，逐个版本查看原文架构、重复单元与参考文献，并加入对比。<br><sub>Explorer: search, filter, read each version's architecture, repeating unit and sources, and add it to a comparison.</sub>
-- **03 层序对照**：Kimi K3、GLM-5.3-Flash、Step 3.5 Flash、MiMo-V2-Flash 的逐层条码，即 FIG.04。<br><sub>Layer stacks: FIG.04, layer-by-layer barcodes for Kimi K3, GLM-5.3-Flash, Step 3.5 Flash and MiMo-V2-Flash.</sub>
+- **03 层序对照**：Kimi K3、GLM-5.3-Flash、Step 3.5 Flash、MiMo-V2-Flash 的逐层条码，即 FIG.04；读取图跟着当前层切换，也可以逐层播放。<br><sub>Layer stacks: FIG.04, layer-by-layer barcodes for Kimi K3, GLM-5.3-Flash, Step 3.5 Flash and MiMo-V2-Flash, with a reading diagram that follows the current layer and a layer-by-layer playback.</sub>
 - **04 原表对照**：与原文逐字一致的表格。<br><sub>Source table: the original table, word for word.</sub>
 - **05 参考资料**：22 篇官方文档、模型仓库与论文。<br><sub>Sources: 22 official docs, model repositories and papers.</sub>
 
@@ -75,6 +75,7 @@ npm run lint       # 规范检查 · Kumo and icon rules
 ```
 src/data.ts                  唯一数据源 · single source of the page data
 src/components/              页面各节 · page sections
+src/scene/                   动画场景引擎与 FIG.01、02、04 的画面 · scene engine and figure scenes
 src/tight-surface/           Tight Surface 设计 token 与组件样式 · design tokens and component styles
 src/kumo-ts/                 Kumo 适配层与 ESLint 规则 · Kumo adapter and lint rules
 scripts/check-data.mjs       数据自检 · data self-check

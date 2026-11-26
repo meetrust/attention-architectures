@@ -93,6 +93,79 @@ body { overflow-x: hidden; }
 .mask-state i { width: 26px; height: 12px; border-radius: 3px; flex: none; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--l2) 28%, var(--panel)) 0 2px, var(--panel) 2px 5px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--l2) 45%, transparent); }
 @media (min-width: 560px) {
   .mask-wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+  /* 流动视图需要整行宽度：画面在上，读数在下分两栏 */
+  .mask-wrap[data-view="flow"] { grid-template-columns: minmax(0, 1fr); }
+  .mask-wrap[data-view="flow"] .mask-read { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--sp-5); align-items: start; }
+  .mask-wrap[data-view="flow"] .mask-say { grid-row: 1 / span 2; }
+}
+
+/* 场景舞台（src/scene/engine.ts，FIG.01 / FIG.02 / FIG.04 共用）：SVG 只画形状与连线，文字是叠在上面的 HTML（原则 9） */
+.scene-stage { position: relative; width: 100%; min-width: 0; touch-action: manipulation; }
+.scene-stage svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.scene-stage rect, .scene-stage path, .scene-stage circle { vector-effect: non-scaling-stroke; }
+.scene-stage .pkt { fill: var(--c); stroke: var(--panel); stroke-width: 1.5px; }
+
+/* FIG.01 流动视图 */
+.flow-stage[data-pickable] .tok { cursor: pointer; }
+.flow-stage .tok {
+  fill: var(--panel-2); stroke: var(--rule-2); stroke-width: 1px;
+  transition: fill var(--dur) var(--ease), stroke var(--dur) var(--ease);
+}
+.flow-stage .tok.is-future { fill: transparent; stroke: var(--rule-2); stroke-dasharray: 3 2; }
+.flow-stage .tok.is-skip { fill: var(--panel-2); stroke: color-mix(in srgb, var(--c) 40%, transparent); }
+.flow-stage .tok.is-read { fill: var(--c); stroke: var(--c); }
+.flow-stage .tok.is-fold { fill: color-mix(in srgb, var(--c) 24%, var(--panel)); stroke: color-mix(in srgb, var(--c) 55%, transparent); }
+.flow-stage .tok.is-self { fill: var(--c); stroke: var(--amber); stroke-width: 2px; }
+.flow-stage .zone { fill: color-mix(in srgb, var(--c) 8%, transparent); stroke: color-mix(in srgb, var(--c) 60%, transparent); stroke-width: 1px; stroke-dasharray: 4 3; }
+.flow-stage .bar { fill: var(--rule-2); transition: fill var(--dur) var(--ease); }
+.flow-stage .bar.is-pick { fill: var(--c); }
+.flow-stage .box { fill: var(--panel); stroke: var(--rule-2); stroke-width: 1.5px; transition: fill var(--dur) var(--ease), stroke var(--dur) var(--ease); }
+.flow-stage .box.is-query { fill: color-mix(in srgb, var(--amber) 9%, var(--panel)); stroke: var(--amber); }
+.flow-stage .box.is-state { fill: color-mix(in srgb, var(--c) 14%, var(--panel)); stroke: color-mix(in srgb, var(--c) 60%, transparent); }
+.flow-stage .lk { fill: none; stroke: color-mix(in srgb, var(--c) 55%, transparent); stroke-width: 1.5px; stroke-linecap: round; transition: stroke var(--dur) var(--ease); }
+.flow-stage .lk.is-fold { stroke: color-mix(in srgb, var(--c) 45%, transparent); stroke-width: 1px; stroke-dasharray: 3 3; }
+.flow-labels { position: absolute; inset: 0; pointer-events: none; }
+.flow-labels .lbl { position: absolute; white-space: nowrap; font-size: var(--fs-2xs); line-height: 16px; color: var(--dim); }
+.flow-labels .lbl[data-at="c"] { transform: translate(-50%, -50%); }
+.flow-labels .lbl[data-at="b"] { transform: translate(-50%, 3px); }
+.flow-labels .lbl[data-at="bl"] { transform: translate(0, 3px); }
+.flow-labels .lbl[data-at="br"] { transform: translate(-100%, 3px); }
+.flow-labels .lbl[data-at="t"] { transform: translate(-50%, calc(-100% - 4px)); }
+.flow-labels .lbl[data-at="tl"] { transform: translate(0, calc(-100% - 4px)); }
+.flow-labels .is-box { font-size: var(--fs-xs); font-weight: 500; color: var(--ink-2); }
+/* 刻度是不透明小签：盖住从 token 底边出发的连线起点，读起来像连线从签下穿出 */
+.flow-labels .is-t, .flow-labels .is-axis { padding: 0 4px; border-radius: 4px; background: var(--panel); font-variant-numeric: tabular-nums; }
+.flow-labels .is-t { color: var(--amber); font-weight: 700; }
+.flow-labels .is-axis { color: var(--faint); }
+/* FIG.02 路线回放：机制块 → 重复单元的层 */
+.rp { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); padding-bottom: var(--sp-5); margin-bottom: var(--sp-5); border-bottom: 1px solid var(--rule); }
+.rp-ctrl { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3) var(--sp-4); min-width: 0; }
+.rp-sel { flex: 1 1 260px; min-width: 0; max-width: 420px; }
+.rp-vers { flex: 1 1 auto; }
+.rp-ver .nm { font-family: var(--font-body); font-size: var(--fs-xs); white-space: nowrap; }
+.rp-ver[aria-current="step"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 9%, var(--panel)); }
+.rp-ver[aria-current="step"] .nm { font-weight: 700; }
+.route-stage .mech { fill: color-mix(in srgb, var(--c) 12%, var(--panel)); stroke: var(--c); stroke-width: 1.5px; }
+.route-stage .cell { fill: var(--c); transition: fill var(--dur) var(--ease); }
+.route-stage .cell-none { fill: transparent; stroke: var(--rule-2); stroke-width: 1px; stroke-dasharray: 4 3; }
+.route-stage .lk { fill: none; stroke: color-mix(in srgb, var(--c) 50%, transparent); stroke-width: 1.5px; stroke-linecap: round; }
+.flow-labels .is-mech { font-size: var(--fs-xs); font-weight: 700; color: var(--c); }
+.rp-say { display: grid; gap: var(--sp-2); min-width: 0; align-content: start; }
+.rp-head { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sp-3); font-size: var(--fs-xs); color: var(--dim); }
+.rp-head b { font-size: var(--fs-base); font-weight: 700; color: var(--ink); }
+.rp-step { font-family: var(--font-display); font-weight: 600; color: var(--faint); font-variant-numeric: tabular-nums; }
+.rp-arch { margin: 0; max-width: 75ch; font-size: var(--fs-sm); line-height: 1.7; color: var(--ink-2); }
+.rp-diff { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-xs); color: var(--dim); }
+.rp-diff-g { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rp-key { grid-template-columns: repeat(auto-fill, minmax(168px, 240px)); }
+@media (min-width: 900px) {
+  .rp { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: var(--sp-6); }
+  .rp-ctrl { grid-column: 1 / -1; }
+  .rp-say { align-self: center; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flow-stage[data-pickable] .tok:hover { stroke: var(--amber); stroke-width: 2px; }
 }
 @media (min-width: 840px) and (max-width: 1099px) {
   .mask-wrap { grid-template-columns: minmax(0, 1fr); }
@@ -238,6 +311,15 @@ body { overflow-x: hidden; }
 .ls-scale { display: flex; justify-content: space-between; margin-top: 6px; font-family: var(--font-display); font-size: var(--fs-2xs); color: var(--faint); font-variant-numeric: tabular-nums; }
 .ls-read { margin: var(--sp-5) 0 0; padding: var(--sp-3) var(--sp-4); min-height: 50px; border-radius: var(--r-md); background: var(--panel-2); font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.7; display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--sp-3); }
 .ls-read b { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* FIG.04 逐层读取：条码的当前层驱动 FIG.01 同款读取图 */
+.ls-panel { margin-top: var(--sp-5); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.ls-side { display: grid; gap: var(--sp-3); justify-items: start; min-width: 0; }
+.ls-panel .ls-read { margin: 0; width: 100%; }
+.ls-note { margin: 0; max-width: 75ch; font-size: var(--fs-xs); line-height: 1.7; color: var(--dim); }
+.ls-rows[data-playing] .ls-tick { transition: left var(--dur) var(--ease); }
+@media (min-width: 900px) {
+  .ls-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: var(--sp-6); }
+}
 .ls-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .ls-rules li { max-width: 75ch; }
 @media (max-width: 759px) {
@@ -370,6 +452,7 @@ body { overflow-x: hidden; }
 /* ---------- 悬停只给精确指针 ---------- */
 @media (hover: hover) and (pointer: fine) {
   .stage:hover { transform: var(--lift); border-color: var(--ice); background: color-mix(in srgb, var(--ice) 6%, var(--panel)); }
+  .rp-ver[aria-current="step"]:hover { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 9%, var(--panel)); }
   .ex-item:not([aria-current="true"]):hover { transform: var(--lift); border-color: var(--rule-2); }
   .tray-x:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
   .refs a:hover .tx { text-decoration: underline; text-underline-offset: 3px; }
@@ -378,11 +461,12 @@ body { overflow-x: hidden; }
 
 /* ---------- 无障碍：强制颜色与减少动效 ---------- */
 @media (forced-colors: active) {
-  .mask-grid i, .ls-cells i, .unit-cells i, .unit-key i, .fam-dot, .duo .tr span, .duo-key i, .mask-state i, .ls-tick { forced-color-adjust: none; }
+  .mask-grid i, .ls-cells i, .unit-cells i, .unit-key i, .fam-dot, .duo .tr span, .duo-key i, .mask-state i, .ls-tick, .scene-stage svg, .flow-labels .lbl { forced-color-adjust: none; }
   .ex-item[aria-current="true"]::before { forced-color-adjust: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ls-row, .rr, .ex-inline { transition: none !important; }
+  .scene-stage rect, .scene-stage path { transition: none; }
 }
 
 /* ---------- 无脚本兜底 ---------- */
