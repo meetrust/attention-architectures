@@ -92,7 +92,6 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const sameGeo = (a: EntSpec, b: EntSpec) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
 export class SceneEngine {
-  private host: HTMLElement;
   private svg: SVGSVGElement;
   private gBack: SVGGElement;
   private gLinks: SVGGElement;
@@ -111,7 +110,6 @@ export class SceneEngine {
   onPick: ((id: string) => void) | null = null;
 
   constructor(host: HTMLElement) {
-    this.host = host;
     this.svg = document.createElementNS(NS, "svg");
     this.svg.setAttribute("aria-hidden", "true");
     this.svg.setAttribute("focusable", "false");
@@ -124,8 +122,13 @@ export class SceneEngine {
     this.labels.setAttribute("aria-hidden", "true");
     host.append(this.svg, this.labels);
     this.svg.addEventListener("click", this.onClick);
-    // 不在视口里、或标签页在后台时停掉循环，省电
-    this.io = new IntersectionObserver(([e]) => { this.visible = e.isIntersecting; this.kick(); });
+    // 不在视口里、或标签页在后台时停掉循环，省电。离开视口时把没播完的过渡直接落到终态：
+    // 否则新元素会停在透明的起点，整页截图、打印和预览里这张图是空的（与 FIG.04 条码当初的问题同类）
+    this.io = new IntersectionObserver(([e]) => {
+      this.visible = e.isIntersecting;
+      if (!this.visible) { this.snap(); this.renderAll(); }
+      this.kick();
+    });
     this.io.observe(host);
     document.addEventListener("visibilitychange", this.kick);
   }
@@ -152,9 +155,9 @@ export class SceneEngine {
     this.kick();
   }
 
-  /** 切到新画面。instant：直接跳到终态（尺寸变化、减少动效时用）。 */
+  /** 切到新画面。instant：直接跳到终态（尺寸变化、减少动效、不在视口里时）。 */
   goTo(scene: Scene, { instant = false } = {}) {
-    instant ||= this.reduced;
+    instant ||= this.reduced || !this.visible;
     this.svg.setAttribute("width", String(scene.w));
     this.svg.setAttribute("height", String(scene.h));
     this.svg.setAttribute("viewBox", `0 0 ${scene.w} ${scene.h}`); // 与 px 尺寸 1:1，不缩放

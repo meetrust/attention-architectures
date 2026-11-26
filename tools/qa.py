@@ -506,6 +506,17 @@ async def modes(b):
         print(f"  host data-theme={host}: body {bg}, h1 {ink}, html color-scheme {cs}")
         if bg != "rgb(244, 246, 249)" or ink != "rgb(18, 24, 38)" or cs != "light": fail("theme", f"page leaves the Day theme when the host sets data-theme={host}")
     await ctx.close()
+    # 视口外的动画图直接画出终态：不滚动、刚加载完就整页截图时，FIG.02 / FIG.04 也不缺内容（打印、预览同理）
+    for w, h in [(1440, 900), (320, 640)]:
+        ctx = await b.new_context(viewport={"width": w, "height": h}); pg = await ctx.new_page()
+        await pg.goto(URL); await pg.wait_for_timeout(1500)
+        off = await pg.evaluate("""[...document.querySelectorAll('.scene-stage')].filter((s) => s.getBoundingClientRect().top > innerHeight)
+          .map((s) => [s.closest('figure').querySelector('figcaption b').textContent.slice(0, 6), [...s.querySelectorAll('svg rect, svg path')].filter((r) => +r.getAttribute('opacity') < 1).length, s.querySelectorAll('svg rect').length])""")
+        print(f"  {w}px off-screen stages right after load (figure, faded shapes, shapes):", off)
+        if not off or any(f or not n for _, f, n in off): fail("motion", f"{w}px an off-screen scene stage is left mid-transition: {off}")
+        for x in await pg.evaluate(FLOW_JS): fail("scene labels", f"{w}px after load: {x}")
+        if w == 1440: await pg.screenshot(path=str(OUT / "offscreen-fullpage.png"), full_page=True)
+        await ctx.close()
     # WCAG 2.2.2：数据包持续流动，任一张图下方的“暂停流动”让三张图一起停在原地，“继续流动”恢复
     PKTS = "[...document.querySelectorAll('.scene-stage .pkt')].map((c) => c.getAttribute('cx') + ',' + c.getAttribute('cy')).join(' ')"
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}); pg = await ctx.new_page()
