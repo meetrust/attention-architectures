@@ -9,8 +9,9 @@
  *
  * Tight Surface 原则 9：SVG 只画线和形状，所有文字是叠在上面的 HTML；坐标是容器实测的 px，不靠 viewBox 缩放。
  * 原则 3：一种缓动、一种时长（与 tokens.css 的 --ease / --dur 一致），先后顺序靠延迟编排；入场 rise 上移 14px、
- *        柱 grow 从 12% 展开，与 Design System“动效”一节相同。数据包每次切换画面后最多流动 FLOW_BUDGET 秒。
- * 原则 5：减少动效时 goTo 直接跳到终态，不发数据包。WCAG 2.2.2：自动开始的动态内容在 5 秒内停下。
+ *        柱 grow 从 12% 展开，与 Design System“动效”一节相同。
+ * 原则 5：减少动效时 goTo 直接跳到终态，不发数据包。WCAG 2.2.2：数据包持续流动，setPaused 让它停在原地，
+ *        页面上每张图下方都有“暂停流动”按钮。
  */
 
 /** --ease: cubic-bezier(.2, .7, .2, 1) 的 JS 版本：二分求出 x 对应的参数，再算 y。 */
@@ -31,8 +32,6 @@ const GROW = 0.12; // 柱从 12% 高度展开，与 Design System 的 grow 一�
 const STAGGER = 24; // 进入的实体之间错开的毫秒数
 const LINK_STAGGER = 18; // 新连线之间错开的毫秒数
 const SPEED = 110; // 数据包速度，px / 秒
-/** 每次切换画面后数据包可见流动的秒数：只在画面可见时计时，最后一个包也在这之前到达，之后画面静止。 */
-const FLOW_BUDGET = 4.8;
 
 /** 标签锚点：c 居中；b 在形状下方居中；tl 在上方左对齐；bl / br 在下方左 / 右对齐（贴边时用，不出画面） */
 export type LabelAt = "c" | "b" | "tl" | "bl" | "br";
@@ -105,7 +104,7 @@ export class SceneEngine {
   private packets: Packet[] = [];
   private raf = 0;
   private last = 0;
-  private budget = 0;
+  private paused = false;
   private visible = true;
   private reduced = false;
   private io: IntersectionObserver;
@@ -141,6 +140,12 @@ export class SceneEngine {
     this.labels.remove();
   }
 
+  /** 暂停数据包：已经在路上的包停在原地，不再发新包；画面切换的过渡照常播放。 */
+  setPaused(on: boolean) {
+    this.paused = on;
+    this.kick();
+  }
+
   setReduced(on: boolean) {
     this.reduced = on;
     if (on) this.clearPackets();
@@ -155,7 +160,6 @@ export class SceneEngine {
     this.svg.setAttribute("viewBox", `0 0 ${scene.w} ${scene.h}`); // 与 px 尺寸 1:1，不缩放
     const now = performance.now();
     if (instant) this.snap();
-    else this.budget = FLOW_BUDGET;
 
     const next = scene.ents;
     const exiting = [...this.ents.values()].filter((e) => !next[e.id] && !e.tw?.remove);
@@ -313,7 +317,10 @@ export class SceneEngine {
 
   private hasWork() {
     for (const e of this.ents.values()) if (e.tw) return true;
-    for (const l of this.links.values()) if (l.tw || (!this.reduced && this.budget > 0 && l.spec.flow)) return true;
+    for (const l of this.links.values()) if (l.tw) return true;
+    // 数据包：暂停或减少动效时不需要逐帧更新
+    if (this.reduced || this.paused) return false;
+    for (const l of this.links.values()) if (l.spec.flow) return true;
     return this.packets.length > 0;
   }
 
@@ -402,11 +409,9 @@ export class SceneEngine {
   }
 
   private stepPackets(dt: number) {
-    if (this.reduced) return;
-    this.budget = Math.max(0, this.budget - dt);
+    if (this.reduced || this.paused) return;
     for (const l of this.links.values()) {
-      // 只发能在预算用完前到达的包：预算结束时画面里已经没有在动的东西
-      if (!l.spec.flow || l.tw || l.draw < 1 || l.len / SPEED > this.budget) continue;
+      if (!l.spec.flow || l.tw || l.draw < 1) continue;
       for (l.acc += dt * l.spec.flow; l.acc >= 1; l.acc -= 1) this.spawn(l);
     }
     const keep: Packet[] = [];

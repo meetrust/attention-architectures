@@ -104,6 +104,8 @@ body { overflow-x: hidden; }
 .scene-stage svg { position: absolute; left: 0; top: 0; overflow: visible; }
 .scene-stage rect, .scene-stage path, .scene-stage circle { vector-effect: non-scaling-stroke; }
 .scene-stage .pkt { fill: var(--c); stroke: var(--panel); stroke-width: 1.5px; }
+.scene { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); min-width: 0; }
+.scene-bar { display: flex; justify-content: flex-end; }
 
 /* FIG.01 流动视图 */
 .flow-stage[data-pickable] .tok { cursor: pointer; }

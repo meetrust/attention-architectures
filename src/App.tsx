@@ -10,6 +10,7 @@ import { Layers } from "./components/Layers";
 import { SourceTable, Sources } from "./components/Reference";
 import { COMPARE_MAX, CompareDialog, CompareTray } from "./components/Compare";
 import { BackToTop, Footer, Nav, Palette } from "./components/Chrome";
+import { FlowPauseProvider } from "./components/SceneStage";
 
 function Shell() {
   const toast = useKumoToastManager();
@@ -97,7 +98,9 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user" transition={reduce ? { duration: 0 } : { duration: 0.28, ease: [0.2, 0.7, 0.2, 1] }}>
       <Toasty>
-        <Shell />
+        <FlowPauseProvider>
+          <Shell />
+        </FlowPauseProvider>
       </Toasty>
     </MotionConfig>
   );
