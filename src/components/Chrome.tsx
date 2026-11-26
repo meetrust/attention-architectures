@@ -6,7 +6,7 @@ import { DATA_DATE, GROUPS, SOURCE_TITLE, VERSIONS } from "../data";
 import { ArrowUp } from "lucide-react";
 import { Tail, glue, scrollToId } from "./common";
 
-export const SECTIONS = [
+const SECTIONS = [
   { id: "routes", no: "01", title: "路线", full: "技术路线迁移" },
   { id: "explorer", no: "02", title: "图鉴", full: "架构图鉴" },
   { id: "layers", no: "03", title: "层序", full: "层序对照" },

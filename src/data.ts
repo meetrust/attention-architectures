@@ -344,7 +344,7 @@ export function groupFamilies(g: Group): FamId[] {
   return FAMILIES.map((f) => f.id).filter((id) => set.has(id));
 }
 
-export function latestFamilies(g: Group): FamId[] {
+function latestFamilies(g: Group): FamId[] {
   return g.versions[g.versions.length - 1].mech;
 }
 

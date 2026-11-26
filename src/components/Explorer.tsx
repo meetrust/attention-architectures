@@ -9,7 +9,7 @@ import {
 import { FamDots, RouteArrow, SectionHead, Tail, UnitBar, cvar, glue, useMedia } from "./common";
 import { stageFams } from "./Routes";
 
-export const routeText = (g: Group) => g.stages.map((s) => s.route).join(" → ");
+const routeText = (g: Group) => g.stages.map((s) => s.route).join(" → ");
 
 /** 复制用的纯文本摘录：原文架构、技术路线与参考文献链接。 */
 export function groupExcerpt(g: Group) {

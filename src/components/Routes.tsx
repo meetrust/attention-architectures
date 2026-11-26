@@ -11,7 +11,7 @@ export function stageFams(g: Group, s: Stage): FamId[] {
   const set = new Set(s.versions.flatMap((id) => g.versions.find((v) => v.id === id)!.mech));
   return FAMILIES.map((f) => f.id).filter((id) => set.has(id));
 }
-export const stageVersions = (s: Stage) => s.versions.map((id) => VERSION_BY_ID[id].name).join(" · ");
+const stageVersions = (s: Stage) => s.versions.map((id) => VERSION_BY_ID[id].name).join(" · ");
 
 const SCALE = 12; // 条形刻度上限：0、3、6、9、12，与 25% 网格线对齐
 

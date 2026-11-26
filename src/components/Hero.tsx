@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Slider, Tabs } from "@cloudflare/kumo";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Chip } from "../kumo-ts/adapters";
 import { FAM, FAMILIES, GROUPS, MODEL_COUNT, REFS, type FamId } from "../data";
 import { Tail, cvar } from "./common";
@@ -138,6 +138,8 @@ const rise = {
 };
 
 export function Hero() {
+  // 这两处自带 transition（错峰、延迟），不走 MotionConfig 的 duration: 0；减少动效时直接不做入场
+  const reduce = useReducedMotion();
   const stats: [number, string][] = [
     [GROUPS.length, "组模型"],
     [MODEL_COUNT, "个模型版本"],
@@ -146,7 +148,7 @@ export function Hero() {
   ];
   return (
     <section className="hero wrap" id="top" aria-labelledby="hero-h">
-      <motion.div className="hero-text" initial="hidden" animate="show" transition={{ staggerChildren: 0.06 }}>
+      <motion.div className="hero-text" initial={reduce ? false : "hidden"} animate="show" transition={{ staggerChildren: 0.06 }}>
         <motion.p className="eyebrow" variants={rise}>Technical reference · Model architectures</motion.p>
         <motion.h1 id="hero-h" variants={rise}>
           <span className="ln">大模型 <em>Attention</em></span>
@@ -169,7 +171,7 @@ export function Hero() {
           ))}
         </motion.dl>
       </motion.div>
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+      <motion.div initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
         <MaskFigure />
       </motion.div>
     </section>

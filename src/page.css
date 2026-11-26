@@ -37,7 +37,6 @@ body { overflow-x: hidden; }
 .nav { padding-top: env(safe-area-inset-top); }
 .nav-in { max-width: var(--wrap); margin: 0 auto; gap: var(--sp-4); padding-left: max(var(--sp-5), env(safe-area-inset-left)); padding-right: max(var(--sp-5), env(safe-area-inset-right)); }
 .brand { text-decoration: none; color: var(--ink); }
-.brand:hover { text-decoration: none; }
 .brand-name { white-space: nowrap; }
 .nav ol { min-width: 0; }
 .nav-act { flex: none; }
@@ -374,7 +373,7 @@ body { overflow-x: hidden; }
   .ex-item:not([aria-current="true"]):hover { transform: var(--lift); border-color: var(--rule-2); }
   .tray-x:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
   .refs a:hover .tx { text-decoration: underline; text-underline-offset: 3px; }
-  .refs a:hover { text-decoration: none; }
+  .refs a:hover, .brand:hover { text-decoration: none; }
 }
 
 /* ---------- 无障碍：强制颜色与减少动效 ---------- */
